@@ -7,12 +7,17 @@ import '../../injection.dart';
 import '../../l10n/strings.dart';
 import '../blocs/medications/medications_bloc.dart';
 import '../blocs/pets/pets_bloc.dart';
+import '../blocs/weight/weight_bloc.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/log_weight_dialog.dart';
 import '../widgets/medication_card.dart';
+import '../widgets/pet_avatar.dart';
+import '../widgets/weight_chart.dart';
 import 'history_screen.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
+import 'weight_history_screen.dart';
 
 class PetDetailScreen extends StatelessWidget {
   final Pet pet;
@@ -20,14 +25,26 @@ class PetDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => MedicationsBloc(
-        pet: pet,
-        getMedications: sl(),
-        saveMedication: sl(),
-        deleteMedication: sl(),
-        logDose: sl(),
-      )..add(const MedicationsRequested()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => MedicationsBloc(
+            pet: pet,
+            getMedications: sl(),
+            saveMedication: sl(),
+            deleteMedication: sl(),
+            logDose: sl(),
+          )..add(const MedicationsRequested()),
+        ),
+        BlocProvider(
+          create: (_) => WeightBloc(
+            pet: pet,
+            getWeightHistory: sl(),
+            logWeight: sl(),
+            deleteWeightEntry: sl(),
+          )..add(const WeightHistoryRequested()),
+        ),
+      ],
       child: _PetDetailView(pet: pet),
     );
   }
@@ -42,7 +59,8 @@ class _PetDetailView extends StatelessWidget {
     context.read<MedicationsBloc>().add(DoseMarkedGiven(
           medication: med,
           notificationTitle: s.reminderTitle(pet.name),
-          notificationBody: s.reminderBody(med.name, med.dosage),
+          notificationBody: s.reminderBody(
+              med.name, s.formatDose(med.doseAmount, med.doseUnit)),
         ));
   }
 
@@ -84,6 +102,18 @@ class _PetDetailView extends StatelessWidget {
     );
   }
 
+  void _openWeightHistory(BuildContext context) {
+    final bloc = context.read<WeightBloc>();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: bloc,
+          child: WeightHistoryScreen(pet: pet),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -112,7 +142,7 @@ class _PetDetailView extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocConsumer<MedicationsBloc, MedicationsState>(
+      body: BlocListener<MedicationsBloc, MedicationsState>(
         listenWhen: (prev, curr) => curr.doseLogCount > prev.doseLogCount,
         listener: (context, state) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,32 +150,21 @@ class _PetDetailView extends StatelessWidget {
                 content: Text(s.doseGivenSnack(state.lastDosedMedName ?? ''))),
           );
         },
-        builder: (context, state) {
-          switch (state.status) {
-            case MedicationsStatus.initial:
-            case MedicationsStatus.loading:
-              return const Center(child: CircularProgressIndicator());
-            case MedicationsStatus.failure:
-              return EmptyState(message: state.error ?? 'Error');
-            case MedicationsStatus.success:
-              if (state.medications.isEmpty) {
-                return EmptyState(message: s.noMedications);
-              }
-              return ListView.builder(
-                itemCount: state.medications.length,
-                itemBuilder: (context, i) {
-                  final med = state.medications[i];
-                  return MedicationCard(
-                    medication: med,
-                    onMarkGiven: () => _markGiven(context, med),
-                    onEdit: () =>
-                        _openMedicationForm(context, medication: med),
-                    onDelete: () => _deleteMedication(context, med),
-                  );
-                },
-              );
-          }
-        },
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 88),
+          children: [
+            _PetHeader(pet: pet),
+            const Divider(height: 1),
+            _WeightSection(onSeeHistory: _openWeightHistory),
+            const Divider(height: 1),
+            _MedicationsSection(
+              onMarkGiven: _markGiven,
+              onEdit: (ctx, med) =>
+                  _openMedicationForm(ctx, medication: med),
+              onDelete: _deleteMedication,
+            ),
+          ],
+        ),
       ),
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton(
@@ -154,6 +173,174 @@ class _PetDetailView extends StatelessWidget {
           child: const Icon(Icons.add),
         ),
       ),
+    );
+  }
+}
+
+/// Header with photo and age.
+class _PetHeader extends StatelessWidget {
+  final Pet pet;
+  const _PetHeader({required this.pet});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final age = pet.ageAt(DateTime.now());
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          PetAvatar(pet: pet, radius: 32),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(pet.name,
+                    style: Theme.of(context).textTheme.titleMedium),
+                if (age != null)
+                  Text(s.age(age.$1, age.$2),
+                      style: Theme.of(context).textTheme.bodyMedium),
+                if (pet.notes != null && pet.notes!.isNotEmpty)
+                  Text(pet.notes!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Weight section: latest value, chart, and a log-weight button.
+class _WeightSection extends StatelessWidget {
+  final void Function(BuildContext) onSeeHistory;
+  const _WeightSection({required this.onSeeHistory});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: BlocBuilder<WeightBloc, WeightState>(
+        builder: (context, state) {
+          final latest = state.latest;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(s.weight,
+                        style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                  if (latest != null)
+                    Text(
+                      '${latest.weightKg} kg',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    tooltip: s.weightHistory,
+                    onPressed: () => onSeeHistory(context),
+                  ),
+                ],
+              ),
+              if (state.entries.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 180,
+                  child: WeightChart(entries: state.entries),
+                ),
+              ] else if (state.status == WeightStatus.success) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(s.noWeightEntries,
+                      style: Theme.of(context).textTheme.bodyMedium),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.tonalIcon(
+                  icon: const Icon(Icons.add),
+                  label: Text(s.logWeight),
+                  onPressed: () => showLogWeightDialog(context,
+                      bloc: context.read<WeightBloc>()),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Medications section: title + cards (or empty message).
+class _MedicationsSection extends StatelessWidget {
+  final void Function(BuildContext, Medication) onMarkGiven;
+  final void Function(BuildContext, Medication) onEdit;
+  final void Function(BuildContext, Medication) onDelete;
+
+  const _MedicationsSection({
+    required this.onMarkGiven,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(s.medications,
+              style: Theme.of(context).textTheme.titleMedium),
+        ),
+        BlocBuilder<MedicationsBloc, MedicationsState>(
+          builder: (context, state) {
+            switch (state.status) {
+              case MedicationsStatus.initial:
+              case MedicationsStatus.loading:
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              case MedicationsStatus.failure:
+                return EmptyState(message: state.error ?? 'Error');
+              case MedicationsStatus.success:
+                if (state.medications.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Text(s.noMedications,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                  );
+                }
+                return Column(
+                  children: [
+                    for (final med in state.medications)
+                      MedicationCard(
+                        medication: med,
+                        onMarkGiven: () => onMarkGiven(context, med),
+                        onEdit: () => onEdit(context, med),
+                        onDelete: () => onDelete(context, med),
+                      ),
+                  ],
+                );
+            }
+          },
+        ),
+      ],
     );
   }
 }

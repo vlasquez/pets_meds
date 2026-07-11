@@ -1,3 +1,4 @@
+import '../../domain/entities/dose_unit.dart';
 import '../../domain/entities/medication.dart';
 import '../../domain/entities/schedule_time.dart';
 
@@ -7,7 +8,8 @@ class MedicationModel extends Medication {
     super.id,
     required super.petId,
     required super.name,
-    required super.dosage,
+    required super.doseAmount,
+    required super.doseUnit,
     required super.frequencyType,
     required super.times,
     super.intervalDays,
@@ -21,7 +23,8 @@ class MedicationModel extends Medication {
         id: med.id,
         petId: med.petId,
         name: med.name,
-        dosage: med.dosage,
+        doseAmount: med.doseAmount,
+        doseUnit: med.doseUnit,
         frequencyType: med.frequencyType,
         times: med.times,
         intervalDays: med.intervalDays,
@@ -30,6 +33,15 @@ class MedicationModel extends Medication {
         active: med.active,
         notes: med.notes,
       );
+
+  static DoseUnit _unitFromName(String? name) {
+    if (name == null) return DoseUnit.unit;
+    try {
+      return DoseUnit.values.byName(name);
+    } on ArgumentError {
+      return DoseUnit.unit;
+    }
+  }
 
   static String encodeTimes(List<ScheduleTime> times) =>
       times.map((t) => t.format()).join(',');
@@ -46,7 +58,8 @@ class MedicationModel extends Medication {
         id: map['id'] as int?,
         petId: map['petId'] as int,
         name: map['name'] as String,
-        dosage: map['dosage'] as String,
+        doseAmount: (map['doseAmount'] as num? ?? 1).toDouble(),
+        doseUnit: _unitFromName(map['doseUnit'] as String?),
         frequencyType:
             FrequencyType.values.byName(map['frequencyType'] as String),
         times: decodeTimes(map['times'] as String),
@@ -63,7 +76,8 @@ class MedicationModel extends Medication {
         'id': id,
         'petId': petId,
         'name': name,
-        'dosage': dosage,
+        'doseAmount': doseAmount,
+        'doseUnit': doseUnit.name,
         'frequencyType': frequencyType.name,
         'times': encodeTimes(times),
         'intervalDays': intervalDays,

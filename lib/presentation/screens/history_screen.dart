@@ -47,7 +47,7 @@ class HistoryScreen extends StatelessWidget {
                           color: Colors.green),
                       title: Text(med == null
                           ? '#${log.medicationId}'
-                          : '${med.name} · ${med.dosage}'),
+                          : '${med.name} · ${s.formatDose(med.doseAmount, med.doseUnit)}'),
                       subtitle: Text(_fmt(log.givenAt)),
                     );
                   },

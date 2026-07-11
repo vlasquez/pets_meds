@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../domain/entities/dose_unit.dart';
+
 /// Lightweight ES/EN localization without codegen.
 class S {
   final Locale locale;
@@ -47,7 +49,80 @@ class S {
       : 'Delete this medication and its reminders?';
   String get medicationName =>
       _es ? 'Nombre del medicamento' : 'Medication name';
-  String get dosage => _es ? 'Dosis (ej. 5 mg, 1 tableta)' : 'Dose (e.g. 5 mg, 1 tablet)';
+  String get doseAmountLabel => _es ? 'Cantidad' : 'Amount';
+  String get doseUnitLabel => _es ? 'Unidad' : 'Unit';
+
+  /// Localized name of a unit, pluralized by [amount].
+  String doseUnitName(DoseUnit unit, double amount) {
+    final plural = amount != 1;
+    if (_es) {
+      switch (unit) {
+        case DoseUnit.ampoule:
+          return plural ? 'ampollas' : 'ampolla';
+        case DoseUnit.application:
+          return plural ? 'aplicaciones' : 'aplicación';
+        case DoseUnit.capsule:
+          return plural ? 'cápsulas' : 'cápsula';
+        case DoseUnit.drop:
+          return plural ? 'gotas' : 'gota';
+        case DoseUnit.gram:
+          return 'g';
+        case DoseUnit.injection:
+          return plural ? 'inyecciones' : 'inyección';
+        case DoseUnit.milligram:
+          return 'mg';
+        case DoseUnit.milliliter:
+          return 'ml';
+        case DoseUnit.packet:
+          return plural ? 'sobres' : 'sobre';
+        case DoseUnit.pill:
+          return plural ? 'pastillas' : 'pastilla';
+        case DoseUnit.spray:
+          return plural ? 'sprays' : 'spray';
+        case DoseUnit.tablet:
+          return plural ? 'tabletas' : 'tableta';
+        case DoseUnit.unit:
+          return plural ? 'unidades' : 'unidad';
+      }
+    }
+    switch (unit) {
+      case DoseUnit.ampoule:
+        return plural ? 'ampoules' : 'ampoule';
+      case DoseUnit.application:
+        return plural ? 'applications' : 'application';
+      case DoseUnit.capsule:
+        return plural ? 'capsules' : 'capsule';
+      case DoseUnit.drop:
+        return plural ? 'drops' : 'drop';
+      case DoseUnit.gram:
+        return 'g';
+      case DoseUnit.injection:
+        return plural ? 'injections' : 'injection';
+      case DoseUnit.milligram:
+        return 'mg';
+      case DoseUnit.milliliter:
+        return 'ml';
+      case DoseUnit.packet:
+        return plural ? 'packets' : 'packet';
+      case DoseUnit.pill:
+        return plural ? 'pills' : 'pill';
+      case DoseUnit.spray:
+        return plural ? 'sprays' : 'spray';
+      case DoseUnit.tablet:
+        return plural ? 'tablets' : 'tablet';
+      case DoseUnit.unit:
+        return plural ? 'units' : 'unit';
+    }
+  }
+
+  /// "2 pastillas", "5 mg", "1 drop"
+  String formatDose(double amount, DoseUnit unit) {
+    final amountText = amount == amount.roundToDouble()
+        ? amount.toInt().toString()
+        : amount.toString();
+    return '$amountText ${doseUnitName(unit, amount)}';
+  }
+
   String get frequency => _es ? 'Frecuencia' : 'Frequency';
   String get everyDay => _es ? 'Todos los días' : 'Every day';
   String everyXDays(int n) =>
@@ -70,6 +145,37 @@ class S {
   String get history => _es ? 'Historial' : 'History';
   String get noHistory =>
       _es ? 'Aún no hay dosis registradas.' : 'No doses logged yet.';
+
+  String get photo => _es ? 'Foto' : 'Photo';
+  String get fromGallery => _es ? 'Galería' : 'Gallery';
+  String get fromCamera => _es ? 'Cámara' : 'Camera';
+  String get removePhoto => _es ? 'Quitar foto' : 'Remove photo';
+  String get birthDate => _es ? 'Fecha de nacimiento' : 'Birth date';
+  String get notSet => _es ? 'Sin definir' : 'Not set';
+
+  String age(int years, int months) {
+    if (_es) {
+      if (years == 0) return '$months mes${months == 1 ? '' : 'es'}';
+      return '$years año${years == 1 ? '' : 's'}, $months mes${months == 1 ? '' : 'es'}';
+    }
+    if (years == 0) return '$months month${months == 1 ? '' : 's'}';
+    return '$years year${years == 1 ? '' : 's'}, $months month${months == 1 ? '' : 's'}';
+  }
+
+  String get weight => _es ? 'Peso' : 'Weight';
+  String get weightKgLabel => _es ? 'Peso (kg)' : 'Weight (kg)';
+  String get logWeight => _es ? 'Registrar peso' : 'Log weight';
+  String get weightHistory => _es ? 'Historial de peso' : 'Weight history';
+  String get noWeightEntries =>
+      _es ? 'Aún no hay registros de peso.' : 'No weight entries yet.';
+  String get deleteWeightEntry =>
+      _es ? 'Eliminar registro' : 'Delete entry';
+  String get deleteWeightEntryConfirm =>
+      _es ? '¿Eliminar este registro de peso?' : 'Delete this weight entry?';
+  String get invalidNumber => _es ? 'Número inválido' : 'Invalid number';
+  String get date => _es ? 'Fecha' : 'Date';
+  String weightLoggedSnack(String kg) =>
+      _es ? 'Peso registrado: $kg kg' : 'Weight logged: $kg kg';
 
   String reminderTitle(String petName) => _es
       ? 'Medicamento para $petName'

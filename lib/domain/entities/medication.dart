@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'dose_unit.dart';
 import 'schedule_time.dart';
 
 enum FrequencyType { daily, intervalDays }
@@ -9,7 +10,8 @@ class Medication extends Equatable {
   final int? id;
   final int petId;
   final String name;
-  final String dosage; // e.g. "5 mg", "1 tablet"
+  final double doseAmount; // e.g. 2 (pills), 5 (mg)
+  final DoseUnit doseUnit;
   final FrequencyType frequencyType;
 
   /// For [FrequencyType.daily]: one or more times of day.
@@ -28,7 +30,8 @@ class Medication extends Equatable {
     this.id,
     required this.petId,
     required this.name,
-    required this.dosage,
+    required this.doseAmount,
+    required this.doseUnit,
     required this.frequencyType,
     required this.times,
     this.intervalDays = 1,
@@ -42,7 +45,8 @@ class Medication extends Equatable {
     int? id,
     int? petId,
     String? name,
-    String? dosage,
+    double? doseAmount,
+    DoseUnit? doseUnit,
     FrequencyType? frequencyType,
     List<ScheduleTime>? times,
     int? intervalDays,
@@ -55,7 +59,8 @@ class Medication extends Equatable {
         id: id ?? this.id,
         petId: petId ?? this.petId,
         name: name ?? this.name,
-        dosage: dosage ?? this.dosage,
+        doseAmount: doseAmount ?? this.doseAmount,
+        doseUnit: doseUnit ?? this.doseUnit,
         frequencyType: frequencyType ?? this.frequencyType,
         times: times ?? this.times,
         intervalDays: intervalDays ?? this.intervalDays,
@@ -70,7 +75,8 @@ class Medication extends Equatable {
         id,
         petId,
         name,
-        dosage,
+        doseAmount,
+        doseUnit,
         frequencyType,
         times,
         intervalDays,

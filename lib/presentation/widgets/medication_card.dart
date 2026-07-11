@@ -38,7 +38,8 @@ class MedicationCard extends StatelessWidget {
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           child: const Icon(Icons.medication),
         ),
-        title: Text('${medication.name} · ${medication.dosage}'),
+        title: Text(
+            '${medication.name} · ${s.formatDose(medication.doseAmount, medication.doseUnit)}'),
         subtitle: Text(_scheduleLabel(s)),
         trailing: PopupMenuButton<String>(
           onSelected: (value) {

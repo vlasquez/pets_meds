@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/dose_unit.dart';
 import '../../domain/entities/medication.dart';
 import '../../domain/entities/pet.dart';
 import '../../domain/entities/schedule_time.dart';
@@ -20,10 +21,11 @@ class MedicationFormScreen extends StatefulWidget {
 class _MedicationFormScreenState extends State<MedicationFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
-  late final TextEditingController _dosageCtrl;
+  late final TextEditingController _amountCtrl;
   late final TextEditingController _notesCtrl;
   late final TextEditingController _intervalCtrl;
 
+  DoseUnit _doseUnit = DoseUnit.pill;
   FrequencyType _frequencyType = FrequencyType.daily;
   List<ScheduleTime> _times = [const ScheduleTime(8, 0)];
   DateTime _startDate = DateTime.now();
@@ -35,7 +37,13 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     super.initState();
     final med = widget.medication;
     _nameCtrl = TextEditingController(text: med?.name ?? '');
-    _dosageCtrl = TextEditingController(text: med?.dosage ?? '');
+    _amountCtrl = TextEditingController(
+        text: med == null
+            ? '1'
+            : (med.doseAmount == med.doseAmount.roundToDouble()
+                ? med.doseAmount.toInt().toString()
+                : med.doseAmount.toString()));
+    _doseUnit = med?.doseUnit ?? DoseUnit.pill;
     _notesCtrl = TextEditingController(text: med?.notes ?? '');
     _intervalCtrl =
         TextEditingController(text: (med?.intervalDays ?? 2).toString());
@@ -51,7 +59,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _dosageCtrl.dispose();
+    _amountCtrl.dispose();
     _notesCtrl.dispose();
     _intervalCtrl.dispose();
     super.dispose();
@@ -91,7 +99,9 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       id: widget.medication?.id,
       petId: widget.pet.id!,
       name: _nameCtrl.text.trim(),
-      dosage: _dosageCtrl.text.trim(),
+      doseAmount:
+          double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 1,
+      doseUnit: _doseUnit,
       frequencyType: _frequencyType,
       times: times,
       intervalDays: int.tryParse(_intervalCtrl.text) ?? 1,
@@ -104,7 +114,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     context.read<MedicationsBloc>().add(MedicationSaved(
           medication: med,
           notificationTitle: s.reminderTitle(widget.pet.name),
-          notificationBody: s.reminderBody(med.name, med.dosage),
+          notificationBody: s.reminderBody(
+              med.name, s.formatDose(med.doseAmount, med.doseUnit)),
         ));
 
     Navigator.of(context).pop();
@@ -130,11 +141,47 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   (v == null || v.trim().isEmpty) ? s.requiredField : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _dosageCtrl,
-              decoration: InputDecoration(labelText: s.dosage),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? s.requiredField : null,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _amountCtrl,
+                    decoration:
+                        InputDecoration(labelText: s.doseAmountLabel),
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    validator: (v) {
+                      final n =
+                          double.tryParse((v ?? '').replaceAll(',', '.'));
+                      return (n == null || n <= 0) ? s.invalidNumber : null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: DropdownButtonFormField<DoseUnit>(
+                    value: _doseUnit,
+                    decoration: InputDecoration(labelText: s.doseUnitLabel),
+                    items: () {
+                      final units = List.of(DoseUnit.values)
+                        ..sort((a, b) => s
+                            .doseUnitName(a, 1)
+                            .toLowerCase()
+                            .compareTo(s.doseUnitName(b, 1).toLowerCase()));
+                      return [
+                        for (final u in units)
+                          DropdownMenuItem(
+                              value: u, child: Text(s.doseUnitName(u, 1))),
+                      ];
+                    }(),
+                    onChanged: (v) =>
+                        setState(() => _doseUnit = v ?? DoseUnit.pill),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<FrequencyType>(
