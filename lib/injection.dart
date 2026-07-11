@@ -1,0 +1,56 @@
+import 'package:get_it/get_it.dart';
+
+import 'data/datasources/local/database_provider.dart';
+import 'data/datasources/local/dose_log_local_datasource.dart';
+import 'data/datasources/local/medication_local_datasource.dart';
+import 'data/datasources/local/notification_datasource.dart';
+import 'data/datasources/local/pet_local_datasource.dart';
+import 'data/repositories/dose_log_repository_impl.dart';
+import 'data/repositories/medication_repository_impl.dart';
+import 'data/repositories/pet_repository_impl.dart';
+import 'data/repositories/reminder_scheduler_impl.dart';
+import 'domain/repositories/dose_log_repository.dart';
+import 'domain/repositories/medication_repository.dart';
+import 'domain/repositories/pet_repository.dart';
+import 'domain/repositories/reminder_scheduler.dart';
+import 'domain/usecases/delete_medication.dart';
+import 'domain/usecases/delete_pet.dart';
+import 'domain/usecases/get_dose_history.dart';
+import 'domain/usecases/get_medications.dart';
+import 'domain/usecases/get_pets.dart';
+import 'domain/usecases/log_dose.dart';
+import 'domain/usecases/save_medication.dart';
+import 'domain/usecases/save_pet.dart';
+
+final sl = GetIt.instance;
+
+/// Wires data sources → repositories → use cases.
+Future<void> initDependencies() async {
+  // Data sources
+  sl.registerLazySingleton(() => DatabaseProvider());
+  sl.registerLazySingleton(() => PetLocalDataSource(sl()));
+  sl.registerLazySingleton(() => MedicationLocalDataSource(sl()));
+  sl.registerLazySingleton(() => DoseLogLocalDataSource(sl()));
+  sl.registerLazySingleton(() => NotificationDataSource());
+
+  // Repositories (domain contracts → data implementations)
+  sl.registerLazySingleton<PetRepository>(() => PetRepositoryImpl(sl()));
+  sl.registerLazySingleton<MedicationRepository>(
+      () => MedicationRepositoryImpl(sl()));
+  sl.registerLazySingleton<DoseLogRepository>(
+      () => DoseLogRepositoryImpl(sl()));
+  sl.registerLazySingleton<ReminderScheduler>(
+      () => ReminderSchedulerImpl(sl()));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetPets(sl()));
+  sl.registerLazySingleton(() => SavePet(sl()));
+  sl.registerLazySingleton(() => DeletePet(sl(), sl(), sl()));
+  sl.registerLazySingleton(() => GetMedications(sl()));
+  sl.registerLazySingleton(() => SaveMedication(sl(), sl()));
+  sl.registerLazySingleton(() => DeleteMedication(sl(), sl()));
+  sl.registerLazySingleton(() => LogDose(sl(), sl()));
+  sl.registerLazySingleton(() => GetDoseHistory(sl(), sl()));
+
+  await sl<NotificationDataSource>().init();
+}
