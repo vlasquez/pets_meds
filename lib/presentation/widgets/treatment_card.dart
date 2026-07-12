@@ -40,7 +40,9 @@ class TreatmentCard extends StatelessWidget {
         ),
         title: Text(
             '${treatment.medicationName} · ${s.formatDose(treatment.doseAmount, treatment.doseUnit)}'),
-        subtitle: Text(_scheduleLabel(s)),
+        subtitle: Text(
+            '${_scheduleLabel(s)}\n${s.remainingDaysLabel(treatment.remainingDays(DateTime.now()))}'),
+        isThreeLine: true,
         trailing: PopupMenuButton<String>(
           onSelected: (value) {
             switch (value) {

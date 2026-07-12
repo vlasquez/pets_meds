@@ -314,6 +314,18 @@ class S {
       ? '¿Eliminar este tratamiento y sus recordatorios?'
       : 'Delete this treatment and its reminders?';
 
+  /// Remaining-days label from [Treatment.remainingDays]:
+  /// null → no expiration date, 0 → ends today, <0 → ended.
+  String remainingDaysLabel(int? days) {
+    if (days == null) {
+      return _es ? 'Sin fecha de expiración' : 'No expiration date';
+    }
+    if (days < 0) return _es ? 'Finalizado' : 'Ended';
+    if (days == 0) return _es ? 'Termina hoy' : 'Ends today';
+    if (_es) return days == 1 ? 'Queda 1 día' : 'Quedan $days días';
+    return days == 1 ? '1 day left' : '$days days left';
+  }
+
   // Vaccinations.
   String get vaccinations => _es ? 'Vacunas' : 'Vaccinations';
   String get addVaccination => _es ? 'Agregar vacuna' : 'Add vaccination';

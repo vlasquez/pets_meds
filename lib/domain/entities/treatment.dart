@@ -81,6 +81,15 @@ class Treatment extends Equatable {
         notes: notes ?? this.notes,
       );
 
+  /// Days remaining until [endDate] (0 = ends today, negative = already
+  /// over), or null when the treatment has no end date.
+  int? remainingDays(DateTime now) {
+    if (endDate == null) return null;
+    final today = DateTime(now.year, now.month, now.day);
+    final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+    return end.difference(today).inDays;
+  }
+
   /// Whether a dose is scheduled on [day] (date only, time ignored):
   /// the treatment is active, within its start/end range, and — for
   /// interval-based schedules — [day] falls on a multiple of the interval.

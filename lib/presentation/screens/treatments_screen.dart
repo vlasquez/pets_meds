@@ -91,7 +91,9 @@ class TreatmentsScreen extends StatelessWidget {
                         title: Text(
                             '${e.treatment.medicationName} · ${s.formatDose(e.treatment.doseAmount, e.treatment.doseUnit)}'),
                         subtitle: Text(
-                            '${e.pet.name} · ${_scheduleLabel(s, e.treatment)}'),
+                            '${e.pet.name} · ${_scheduleLabel(s, e.treatment)}\n'
+                            '${s.remainingDaysLabel(e.treatment.remainingDays(DateTime.now()))}'),
+                        isThreeLine: true,
                         trailing: PopupMenuButton<String>(
                           onSelected: (value) {
                             switch (value) {
