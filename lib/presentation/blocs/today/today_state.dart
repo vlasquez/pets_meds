@@ -2,15 +2,20 @@ part of 'today_bloc.dart';
 
 enum TodayStatus { initial, loading, success, failure }
 
-/// A medication scheduled today plus whether a dose was already logged.
+/// A treatment scheduled today plus today's dose log (if already given).
 final class TodayItem extends Equatable {
-  final Medication medication;
-  final bool givenToday;
+  final Treatment treatment;
 
-  const TodayItem({required this.medication, required this.givenToday});
+  /// Id of today's latest dose log for this treatment, or null when
+  /// no dose was logged today. Used to uncheck (delete the log).
+  final int? todayLogId;
+
+  const TodayItem({required this.treatment, this.todayLogId});
+
+  bool get givenToday => todayLogId != null;
 
   @override
-  List<Object?> get props => [medication, givenToday];
+  List<Object?> get props => [treatment, todayLogId];
 }
 
 /// A pet with its treatments scheduled for today.
@@ -30,7 +35,7 @@ final class TodayState extends Equatable {
 
   /// Incremented on each dose logged from Home (for a snackbar via listener).
   final int doseLogCount;
-  final String? lastDosedMedName;
+  final String? lastDosedName;
 
   final String? error;
 
@@ -38,7 +43,7 @@ final class TodayState extends Equatable {
     this.status = TodayStatus.initial,
     this.entries = const [],
     this.doseLogCount = 0,
-    this.lastDosedMedName,
+    this.lastDosedName,
     this.error,
   });
 
@@ -46,18 +51,18 @@ final class TodayState extends Equatable {
     TodayStatus? status,
     List<TodayEntry>? entries,
     int? doseLogCount,
-    String? lastDosedMedName,
+    String? lastDosedName,
     String? error,
   }) =>
       TodayState(
         status: status ?? this.status,
         entries: entries ?? this.entries,
         doseLogCount: doseLogCount ?? this.doseLogCount,
-        lastDosedMedName: lastDosedMedName ?? this.lastDosedMedName,
+        lastDosedName: lastDosedName ?? this.lastDosedName,
         error: error,
       );
 
   @override
   List<Object?> get props =>
-      [status, entries, doseLogCount, lastDosedMedName, error];
+      [status, entries, doseLogCount, lastDosedName, error];
 }

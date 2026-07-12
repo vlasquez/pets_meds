@@ -8,11 +8,8 @@ class MedicationRepositoryImpl implements MedicationRepository {
   const MedicationRepositoryImpl(this._local);
 
   @override
-  Future<List<Medication>> getMedicationsForPet(int petId) =>
-      _local.getForPet(petId);
-
-  @override
-  Future<List<Medication>> getAllMedications() => _local.getAll();
+  Future<List<Medication>> getMedications() async =>
+      List<Medication>.of(await _local.getAll());
 
   @override
   Future<Medication> insertMedication(Medication medication) async {
@@ -23,7 +20,4 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<void> updateMedication(Medication medication) =>
       _local.update(MedicationModel.fromEntity(medication));
-
-  @override
-  Future<void> deleteMedication(int id) => _local.delete(id);
 }

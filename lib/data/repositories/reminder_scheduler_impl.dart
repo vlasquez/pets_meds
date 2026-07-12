@@ -1,4 +1,4 @@
-import '../../domain/entities/medication.dart';
+import '../../domain/entities/treatment.dart';
 import '../../domain/repositories/reminder_scheduler.dart';
 import '../datasources/local/notification_datasource.dart';
 
@@ -7,11 +7,11 @@ class ReminderSchedulerImpl implements ReminderScheduler {
   const ReminderSchedulerImpl(this._notifications);
 
   @override
-  Future<void> schedule(Medication medication,
+  Future<void> schedule(Treatment treatment,
           {required String title, required String body}) =>
-      _notifications.scheduleMedication(medication, title: title, body: body);
+      _notifications.scheduleTreatment(treatment, title: title, body: body);
 
   @override
-  Future<void> cancel(Medication medication) =>
-      _notifications.cancelMedication(medication);
+  Future<void> cancel(Treatment treatment) =>
+      _notifications.cancelTreatment(treatment);
 }

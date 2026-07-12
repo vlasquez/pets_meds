@@ -4,7 +4,7 @@ import '../../domain/entities/dose_log.dart';
 class DoseLogModel extends DoseLog {
   const DoseLogModel({
     super.id,
-    required super.medicationId,
+    required super.treatmentId,
     required super.petId,
     required super.givenAt,
     super.note,
@@ -12,7 +12,7 @@ class DoseLogModel extends DoseLog {
 
   factory DoseLogModel.fromEntity(DoseLog log) => DoseLogModel(
         id: log.id,
-        medicationId: log.medicationId,
+        treatmentId: log.treatmentId,
         petId: log.petId,
         givenAt: log.givenAt,
         note: log.note,
@@ -20,7 +20,7 @@ class DoseLogModel extends DoseLog {
 
   factory DoseLogModel.fromMap(Map<String, dynamic> map) => DoseLogModel(
         id: map['id'] as int?,
-        medicationId: map['medicationId'] as int,
+        treatmentId: map['treatmentId'] as int,
         petId: map['petId'] as int,
         givenAt: DateTime.parse(map['givenAt'] as String),
         note: map['note'] as String?,
@@ -28,7 +28,7 @@ class DoseLogModel extends DoseLog {
 
   Map<String, dynamic> toMap() => {
         'id': id,
-        'medicationId': medicationId,
+        'treatmentId': treatmentId,
         'petId': petId,
         'givenAt': givenAt.toIso8601String(),
         'note': note,

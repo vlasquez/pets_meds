@@ -1,17 +1,11 @@
 import '../../models/medication_model.dart';
 import 'database_provider.dart';
 
-/// Raw SQLite access for medications. Returns models, no domain logic.
+/// Raw SQLite access for the medication catalog.
+/// Returns models, no domain logic.
 class MedicationLocalDataSource {
   final DatabaseProvider _provider;
   const MedicationLocalDataSource(this._provider);
-
-  Future<List<MedicationModel>> getForPet(int petId) async {
-    final db = await _provider.database;
-    final rows = await db.query('medications',
-        where: 'petId = ?', whereArgs: [petId], orderBy: 'name COLLATE NOCASE');
-    return rows.map(MedicationModel.fromMap).toList();
-  }
 
   Future<List<MedicationModel>> getAll() async {
     final db = await _provider.database;
@@ -29,10 +23,5 @@ class MedicationLocalDataSource {
     final db = await _provider.database;
     await db.update('medications', med.toMap(),
         where: 'id = ?', whereArgs: [med.id]);
-  }
-
-  Future<void> delete(int id) async {
-    final db = await _provider.database;
-    await db.delete('medications', where: 'id = ?', whereArgs: [id]);
   }
 }

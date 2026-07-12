@@ -2,6 +2,10 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Owns the SQLite connection and schema.
+///
+/// Since v7 the model is: `medications` is a standalone catalog and
+/// `treatments` assigns a medication to a pet with a dosing schedule
+/// (1 medication → many treatments). Dose logs reference treatments.
 class DatabaseProvider {
   Database? _db;
 
@@ -14,7 +18,7 @@ class DatabaseProvider {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pet_meds.db'),
-      version: 6,
+      version: 8,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pets(
@@ -27,31 +31,9 @@ class DatabaseProvider {
             birthDate TEXT
           )
         ''');
-        await db.execute('''
-          CREATE TABLE medications(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-            name TEXT NOT NULL,
-            doseAmount REAL NOT NULL DEFAULT 1,
-            doseUnit TEXT NOT NULL DEFAULT 'unit',
-            frequencyType TEXT NOT NULL,
-            times TEXT NOT NULL,
-            intervalDays INTEGER NOT NULL DEFAULT 1,
-            startDate TEXT NOT NULL,
-            endDate TEXT,
-            active INTEGER NOT NULL DEFAULT 1,
-            notes TEXT
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE dose_logs(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            medicationId INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
-            petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-            givenAt TEXT NOT NULL,
-            note TEXT
-          )
-        ''');
+        await _createMedicationsTable(db);
+        await _createTreatmentsTable(db);
+        await _createDoseLogsTable(db);
         await _createWeightTable(db);
         await _createVaccinationsTable(db);
       },
@@ -77,8 +59,25 @@ class DatabaseProvider {
         if (oldVersion < 5) {
           await db.execute('ALTER TABLE pets ADD COLUMN breed TEXT');
         }
-        if (oldVersion < 6) {
-          await _rebuildMedicationsTable(db);
+        if (oldVersion < 7) {
+          await _migrateToCatalogAndTreatments(db);
+        }
+        if (oldVersion == 7) {
+          // v8: richer frequency model. (<7 already got the new columns
+          // via the rebuilt treatments table above.)
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN intervalValue INTEGER NOT NULL DEFAULT 8");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN intervalUnit TEXT NOT NULL DEFAULT 'hours'");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN weekdays TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN cycleDaysOn INTEGER NOT NULL DEFAULT 21");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN cycleDaysOff INTEGER NOT NULL DEFAULT 7");
+          await db.execute(
+              "UPDATE treatments SET intervalValue = intervalDays, intervalUnit = 'days', "
+              "frequencyType = 'interval' WHERE frequencyType = 'intervalDays'");
         }
       },
       onConfigure: (db) async {
@@ -87,29 +86,58 @@ class DatabaseProvider {
     );
   }
 
-  Future<void> _createWeightTable(Database db) async {
+  Future<void> _createMedicationsTable(Database db) async {
     await db.execute('''
-      CREATE TABLE weight_entries(
+      CREATE TABLE medications(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        notes TEXT
+      )
+    ''');
+  }
+
+  Future<void> _createTreatmentsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE treatments(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-        weightKg REAL NOT NULL,
-        measuredAt TEXT NOT NULL,
+        medicationId INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
+        doseAmount REAL NOT NULL DEFAULT 1,
+        doseUnit TEXT NOT NULL DEFAULT 'unit',
+        frequencyType TEXT NOT NULL,
+        times TEXT NOT NULL,
+        intervalValue INTEGER NOT NULL DEFAULT 8,
+        intervalUnit TEXT NOT NULL DEFAULT 'hours',
+        weekdays TEXT NOT NULL DEFAULT '',
+        cycleDaysOn INTEGER NOT NULL DEFAULT 21,
+        cycleDaysOff INTEGER NOT NULL DEFAULT 7,
+        startDate TEXT NOT NULL,
+        endDate TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        notes TEXT
+      )
+    ''');
+  }
+
+  Future<void> _createDoseLogsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE dose_logs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        treatmentId INTEGER NOT NULL REFERENCES treatments(id) ON DELETE CASCADE,
+        petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+        givenAt TEXT NOT NULL,
         note TEXT
       )
     ''');
   }
 
-  /// Databases created before v3 have a legacy `dosage TEXT NOT NULL`
-  /// column that later schemas no longer write, so inserts fail with a
-  /// NOT NULL constraint. SQLite can't drop/relax a column, so rebuild
-  /// the table with the current schema. Dose logs are backed up first:
-  /// with foreign_keys ON, dropping `medications` would cascade-delete
-  /// them.
-  Future<void> _rebuildMedicationsTable(Database db) async {
-    const columns =
-        'id, petId, name, doseAmount, doseUnit, frequencyType, times, '
-        'intervalDays, startDate, endDate, active, notes';
-
+  /// v7: the old `medications` table (one row per pet+med+schedule, possibly
+  /// still carrying a legacy NOT NULL `dosage` column from v1/v2) is split
+  /// into a `medications` catalog and a `treatments` table. Existing rows
+  /// become treatments; distinct names seed the catalog. Dose logs are
+  /// backed up first — with foreign_keys ON, dropping their parent table
+  /// would cascade-delete them — then rebuilt referencing treatments.
+  Future<void> _migrateToCatalogAndTreatments(Database db) async {
     // 1. Back up dose_logs without FKs, then drop it (child first).
     await db.execute('''
       CREATE TABLE dose_logs_backup(
@@ -124,41 +152,54 @@ class DatabaseProvider {
         'INSERT INTO dose_logs_backup SELECT id, medicationId, petId, givenAt, note FROM dose_logs');
     await db.execute('DROP TABLE dose_logs');
 
-    // 2. Rebuild medications with the current schema.
-    await db.execute('''
-      CREATE TABLE medications_new(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-        name TEXT NOT NULL,
-        doseAmount REAL NOT NULL DEFAULT 1,
-        doseUnit TEXT NOT NULL DEFAULT 'unit',
-        frequencyType TEXT NOT NULL,
-        times TEXT NOT NULL,
-        intervalDays INTEGER NOT NULL DEFAULT 1,
-        startDate TEXT NOT NULL,
-        endDate TEXT,
-        active INTEGER NOT NULL DEFAULT 1,
-        notes TEXT
-      )
-    ''');
-    await db.execute(
-        'INSERT INTO medications_new ($columns) SELECT $columns FROM medications');
-    await db.execute('DROP TABLE medications');
-    await db.execute('ALTER TABLE medications_new RENAME TO medications');
+    // 2. Free up the `medications` name for the catalog.
+    await db.execute('ALTER TABLE medications RENAME TO old_treatments');
 
-    // 3. Restore dose_logs with its FKs.
+    // 3. Catalog: one row per distinct medication name.
+    await _createMedicationsTable(db);
+    await db.execute(
+        'INSERT INTO medications(name) SELECT DISTINCT name FROM old_treatments');
+
+    // 4. Treatments: old rows keep their ids, linked to the catalog by
+    //    name. Legacy 'intervalDays' frequency maps to the richer
+    //    interval model (value + unit).
+    await _createTreatmentsTable(db);
     await db.execute('''
-      CREATE TABLE dose_logs(
+      INSERT INTO treatments (id, petId, medicationId, doseAmount, doseUnit,
+                              frequencyType, times, intervalValue,
+                              intervalUnit, startDate, endDate, active, notes)
+      SELECT t.id, t.petId, m.id, t.doseAmount, t.doseUnit,
+             CASE t.frequencyType WHEN 'intervalDays' THEN 'interval'
+                                  ELSE t.frequencyType END,
+             t.times,
+             CASE t.frequencyType WHEN 'intervalDays' THEN t.intervalDays
+                                  ELSE 8 END,
+             CASE t.frequencyType WHEN 'intervalDays' THEN 'days'
+                                  ELSE 'hours' END,
+             t.startDate, t.endDate, t.active, t.notes
+      FROM old_treatments t
+      JOIN medications m ON m.name = t.name
+    ''');
+    await db.execute('DROP TABLE old_treatments');
+
+    // 5. Restore dose logs referencing treatments (same ids as before).
+    await _createDoseLogsTable(db);
+    await db.execute(
+        'INSERT INTO dose_logs (id, treatmentId, petId, givenAt, note) '
+        'SELECT id, medicationId, petId, givenAt, note FROM dose_logs_backup');
+    await db.execute('DROP TABLE dose_logs_backup');
+  }
+
+  Future<void> _createWeightTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE weight_entries(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        medicationId INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
         petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-        givenAt TEXT NOT NULL,
+        weightKg REAL NOT NULL,
+        measuredAt TEXT NOT NULL,
         note TEXT
       )
     ''');
-    await db.execute(
-        'INSERT INTO dose_logs SELECT id, medicationId, petId, givenAt, note FROM dose_logs_backup');
-    await db.execute('DROP TABLE dose_logs_backup');
   }
 
   Future<void> _createVaccinationsTable(Database db) async {

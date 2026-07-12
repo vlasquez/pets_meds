@@ -11,27 +11,26 @@ final class TreatmentsRequested extends TreatmentsEvent {
   const TreatmentsRequested();
 }
 
-/// Insert (id == null) or update a medication assigned to a pet,
-/// (re)scheduling its reminders.
+/// Insert (id == null) or update a treatment, (re)scheduling its reminders.
 final class TreatmentSaved extends TreatmentsEvent {
-  final Medication medication;
+  final Treatment treatment;
   final String notificationTitle;
   final String notificationBody;
 
   const TreatmentSaved({
-    required this.medication,
+    required this.treatment,
     required this.notificationTitle,
     required this.notificationBody,
   });
 
   @override
-  List<Object?> get props => [medication, notificationTitle, notificationBody];
+  List<Object?> get props => [treatment, notificationTitle, notificationBody];
 }
 
 final class TreatmentDeleted extends TreatmentsEvent {
-  final Medication medication;
-  const TreatmentDeleted(this.medication);
+  final Treatment treatment;
+  const TreatmentDeleted(this.treatment);
 
   @override
-  List<Object?> get props => [medication];
+  List<Object?> get props => [treatment];
 }

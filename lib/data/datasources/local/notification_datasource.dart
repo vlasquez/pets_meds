@@ -2,12 +2,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../../../domain/entities/medication.dart';
 import '../../../domain/entities/schedule_time.dart';
+import '../../../domain/entities/treatment.dart';
 import '../../../domain/entities/vaccination.dart';
 
 /// Wraps flutter_local_notifications: permission setup and
-/// (re)scheduling of medication reminders.
+/// (re)scheduling of treatment and vaccination reminders.
 class NotificationDataSource {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -44,62 +44,80 @@ class NotificationDataSource {
         iOS: DarwinNotificationDetails(),
       );
 
-  /// One notification id per (medication, time slot).
-  int _notificationId(int medicationId, int timeIndex) =>
-      medicationId * 100 + timeIndex;
+  /// One notification id per (treatment, time slot).
+  int _notificationId(int treatmentId, int timeIndex) =>
+      treatmentId * 100 + timeIndex;
 
-  Future<void> scheduleMedication(Medication med,
+  Future<void> scheduleTreatment(Treatment treatment,
       {required String title, required String body}) async {
-    await cancelMedication(med);
-    if (!med.active || med.id == null) return;
-    if (med.endDate != null && med.endDate!.isBefore(DateTime.now())) return;
+    await cancelTreatment(treatment);
+    if (!treatment.active || treatment.id == null) return;
+    if (treatment.endDate != null &&
+        treatment.endDate!.isBefore(DateTime.now())) {
+      return;
+    }
 
-    for (var i = 0; i < med.times.length; i++) {
-      final time = med.times[i];
-      final id = _notificationId(med.id!, i);
+    var slot = 0;
+    Future<void> repeating(tz.TZDateTime when,
+        DateTimeComponents match) async {
+      await _plugin.zonedSchedule(
+        _notificationId(treatment.id!, slot++), title, body, when, _details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: match,
+      );
+    }
 
-      if (med.frequencyType == FrequencyType.daily) {
-        await _plugin.zonedSchedule(
-          id,
-          title,
-          body,
-          _nextInstanceOf(time),
-          _details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time,
-        );
-      } else {
-        // Every N days: schedule the next single occurrence.
-        // Rescheduled when a dose is logged or when the app starts.
-        final next = _nextIntervalOccurrence(med, time);
-        if (next != null) {
-          await _plugin.zonedSchedule(
-            id,
-            title,
-            body,
-            next,
-            _details,
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation:
-                UILocalNotificationDateInterpretation.absoluteTime,
-          );
+    Future<void> oneShot(tz.TZDateTime? when) async {
+      if (when == null) return;
+      await _plugin.zonedSchedule(
+        _notificationId(treatment.id!, slot++), title, body, when, _details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
+
+    switch (treatment.frequencyType) {
+      case FrequencyType.onDemand:
+        return; // No reminders.
+      case FrequencyType.daily:
+        for (final time in treatment.times) {
+          await repeating(_nextInstanceOf(time), DateTimeComponents.time);
         }
-      }
+      case FrequencyType.weekdays:
+        for (final weekday in treatment.weekdays) {
+          for (final time in treatment.times) {
+            await repeating(_nextInstanceOfWeekday(weekday, time),
+                DateTimeComponents.dayOfWeekAndTime);
+          }
+        }
+      case FrequencyType.interval:
+      case FrequencyType.cyclic:
+        // One-shot next occurrences; rescheduled when a dose is logged
+        // or when the app starts.
+        if (treatment.frequencyType == FrequencyType.interval &&
+            treatment.intervalUnit == IntervalUnit.hours) {
+          await oneShot(_nextHourlyOccurrence(treatment));
+        } else {
+          for (final time in treatment.times) {
+            await oneShot(_nextScheduledDayOccurrence(treatment, time));
+          }
+        }
     }
   }
 
-  Future<void> cancelMedication(Medication med) async {
-    if (med.id == null) return;
-    // Cancel up to 100 possible time slots for this medication.
+  Future<void> cancelTreatment(Treatment treatment) async {
+    if (treatment.id == null) return;
+    // Cancel up to 100 possible time slots for this treatment.
     for (var i = 0; i < 100; i++) {
-      await _plugin.cancel(_notificationId(med.id!, i));
+      await _plugin.cancel(_notificationId(treatment.id!, i));
     }
   }
 
   /// Vaccination ids live in their own range to avoid colliding with
-  /// medication reminder ids (medicationId * 100 + timeIndex).
+  /// treatment reminder ids (treatmentId * 100 + timeIndex).
   int _vaccinationNotificationId(int vaccinationId) =>
       2000000000 - vaccinationId;
 
@@ -141,18 +159,53 @@ class NotificationDataSource {
     return scheduled;
   }
 
-  tz.TZDateTime? _nextIntervalOccurrence(Medication med, ScheduleTime time) {
+  tz.TZDateTime _nextInstanceOfWeekday(int weekday, ScheduleTime time) {
+    var scheduled = _nextInstanceOf(time);
+    while (scheduled.weekday != weekday) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
+  }
+
+  /// Next `startDate + k * intervalValue` hours strictly after now.
+  tz.TZDateTime? _nextHourlyOccurrence(Treatment treatment) {
     final now = tz.TZDateTime.now(tz.local);
-    var candidate = tz.TZDateTime(tz.local, med.startDate.year,
-        med.startDate.month, med.startDate.day, time.hour, time.minute);
+    var candidate = tz.TZDateTime(tz.local, treatment.startDate.year,
+        treatment.startDate.month, treatment.startDate.day);
+    final step = Duration(hours: treatment.intervalValue);
     while (!candidate.isAfter(now)) {
-      candidate = candidate.add(Duration(days: med.intervalDays));
+      candidate = candidate.add(step);
     }
-    if (med.endDate != null &&
-        candidate.isAfter(tz.TZDateTime(tz.local, med.endDate!.year,
-            med.endDate!.month, med.endDate!.day, 23, 59))) {
-      return null;
+    return _withinEndDate(treatment, candidate) ? candidate : null;
+  }
+
+  /// Next day matching the treatment's pattern (interval days/months or
+  /// cyclic) with [time] strictly after now. Scans forward bounded.
+  tz.TZDateTime? _nextScheduledDayOccurrence(
+      Treatment treatment, ScheduleTime time) {
+    final now = tz.TZDateTime.now(tz.local);
+    var day = DateTime(now.year, now.month, now.day);
+    for (var i = 0; i < 800; i++) {
+      if (treatment.isScheduledOn(day)) {
+        final candidate = tz.TZDateTime(
+            tz.local, day.year, day.month, day.day, time.hour, time.minute);
+        if (candidate.isAfter(now)) {
+          return _withinEndDate(treatment, candidate) ? candidate : null;
+        }
+      }
+      day = day.add(const Duration(days: 1));
     }
-    return candidate;
+    return null;
+  }
+
+  bool _withinEndDate(Treatment treatment, tz.TZDateTime candidate) {
+    if (treatment.endDate == null) return true;
+    return !candidate.isAfter(tz.TZDateTime(
+        tz.local,
+        treatment.endDate!.year,
+        treatment.endDate!.month,
+        treatment.endDate!.day,
+        23,
+        59));
   }
 }

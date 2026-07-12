@@ -20,4 +20,9 @@ class DoseLogLocalDataSource {
     final db = await _provider.database;
     return db.insert('dose_logs', log.toMap()..remove('id'));
   }
+
+  Future<void> delete(int id) async {
+    final db = await _provider.database;
+    await db.delete('dose_logs', where: 'id = ?', whereArgs: [id]);
+  }
 }

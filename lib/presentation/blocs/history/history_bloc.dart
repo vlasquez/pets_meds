@@ -2,8 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/dose_log.dart';
-import '../../../domain/entities/medication.dart';
 import '../../../domain/entities/pet.dart';
+import '../../../domain/entities/treatment.dart';
 import '../../../domain/usecases/get_dose_history.dart';
 
 part 'history_event.dart';
@@ -28,7 +28,7 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
       emit(state.copyWith(
         status: HistoryStatus.success,
         logs: history.logs,
-        medicationsById: history.medicationsById,
+        treatmentsById: history.treatmentsById,
       ));
     } catch (e) {
       emit(state.copyWith(status: HistoryStatus.failure, error: e.toString()));

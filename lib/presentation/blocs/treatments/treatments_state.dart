@@ -2,45 +2,45 @@ part of 'treatments_bloc.dart';
 
 enum TreatmentsStatus { initial, loading, success, failure }
 
-/// A medication together with the pet it is assigned to.
-final class Treatment extends Equatable {
-  final Medication medication;
+/// A treatment together with the pet it is assigned to.
+final class TreatmentEntry extends Equatable {
+  final Treatment treatment;
   final Pet pet;
 
-  const Treatment({required this.medication, required this.pet});
+  const TreatmentEntry({required this.treatment, required this.pet});
 
   @override
-  List<Object?> get props => [medication, pet];
+  List<Object?> get props => [treatment, pet];
 }
 
 final class TreatmentsState extends Equatable {
   final TreatmentsStatus status;
-  final List<Treatment> treatments;
+  final List<TreatmentEntry> entries;
 
-  /// All pets, for the "assign to pet" picker.
+  /// All pets, for the "assign to pet" selector.
   final List<Pet> pets;
   final String? error;
 
   const TreatmentsState({
     this.status = TreatmentsStatus.initial,
-    this.treatments = const [],
+    this.entries = const [],
     this.pets = const [],
     this.error,
   });
 
   TreatmentsState copyWith({
     TreatmentsStatus? status,
-    List<Treatment>? treatments,
+    List<TreatmentEntry>? entries,
     List<Pet>? pets,
     String? error,
   }) =>
       TreatmentsState(
         status: status ?? this.status,
-        treatments: treatments ?? this.treatments,
+        entries: entries ?? this.entries,
         pets: pets ?? this.pets,
         error: error,
       );
 
   @override
-  List<Object?> get props => [status, treatments, pets, error];
+  List<Object?> get props => [status, entries, pets, error];
 }

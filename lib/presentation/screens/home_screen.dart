@@ -22,8 +22,7 @@ class HomeScreen extends StatelessWidget {
         listenWhen: (prev, curr) => curr.doseLogCount > prev.doseLogCount,
         listener: (context, state) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(s.doseGivenSnack(state.lastDosedMedName ?? ''))),
+            SnackBar(content: Text(s.doseGivenSnack(state.lastDosedName ?? ''))),
           );
         },
         child: BlocBuilder<TodayBloc, TodayState>(
@@ -44,7 +43,7 @@ class HomeScreen extends StatelessWidget {
                     for (final entry in state.entries) ...[
                       _PetHeader(entry: entry),
                       for (final item in entry.items)
-                        _TodayMedTile(entry: entry, item: item),
+                        _TodayTreatmentTile(entry: entry, item: item),
                     ],
                   ],
                 );
@@ -79,27 +78,26 @@ class _PetHeader extends StatelessWidget {
   }
 }
 
-class _TodayMedTile extends StatelessWidget {
+class _TodayTreatmentTile extends StatelessWidget {
   final TodayEntry entry;
   final TodayItem item;
-  const _TodayMedTile({required this.entry, required this.item});
+  const _TodayTreatmentTile({required this.entry, required this.item});
 
   void _markGiven(BuildContext context) {
     final s = S.of(context);
-    final med = item.medication;
+    final t = item.treatment;
     context.read<TodayBloc>().add(TodayDoseGiven(
-          medication: med,
+          treatment: t,
           notificationTitle: s.reminderTitle(entry.pet.name),
           notificationBody: s.reminderBody(
-              med.name, s.formatDose(med.doseAmount, med.doseUnit)),
+              t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
         ));
   }
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final med = item.medication;
-    final times = med.times.map((t) => t.format()).join(', ');
+    final t = item.treatment;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
@@ -110,11 +108,19 @@ class _TodayMedTile extends StatelessWidget {
           child: const Icon(Icons.medication),
         ),
         title: Text(
-            '${med.name} · ${s.formatDose(med.doseAmount, med.doseUnit)}'),
-        subtitle: Text(times),
+            '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
+        subtitle: Text(
+            '${s.scheduleLabel(t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
+        isThreeLine: true,
         trailing: item.givenToday
-            ? Icon(Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary)
+            ? IconButton(
+                icon: Icon(Icons.check_circle,
+                    color: Theme.of(context).colorScheme.primary),
+                tooltip: s.unmarkGiven,
+                onPressed: () => context
+                    .read<TodayBloc>()
+                    .add(TodayDoseUnmarked(item.todayLogId!)),
+              )
             : IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: s.markGiven,

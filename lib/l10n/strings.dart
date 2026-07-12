@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../domain/entities/breed.dart';
 import '../domain/entities/dose_unit.dart';
+import '../domain/entities/treatment.dart';
 import '../domain/entities/vaccination.dart';
 
 /// Lightweight ES/EN localization without codegen.
@@ -232,6 +233,91 @@ class S {
   String get everyDay => _es ? 'Todos los días' : 'Every day';
   String everyXDays(int n) =>
       _es ? 'Cada $n día${n == 1 ? '' : 's'}' : 'Every $n day${n == 1 ? '' : 's'}';
+  String everyXHours(int n) =>
+      _es ? 'Cada $n hora${n == 1 ? '' : 's'}' : 'Every $n hour${n == 1 ? '' : 's'}';
+  String everyXMonths(int n) => _es
+      ? 'Cada $n mes${n == 1 ? '' : 'es'}'
+      : 'Every $n month${n == 1 ? '' : 's'}';
+  String get intervalOption => _es ? 'Intervalo' : 'Interval';
+  String get everyXHoursOption => _es ? 'Cada X horas' : 'Every X hours';
+  String get everyXDaysOption => _es ? 'Cada X días' : 'Every X days';
+  String get everyXMonthsOption => _es ? 'Cada X meses' : 'Every X months';
+  String get weekdaysOption => _es
+      ? 'Días específicos de la semana'
+      : 'Specific days of the week';
+  String get cyclicOption => _es ? 'Modo cíclico' : 'Cyclic mode';
+  String get onDemandOption => _es ? 'A demanda' : 'On demand';
+  String get remindEvery => _es ? 'Recordar cada' : 'Remind every';
+  String get confirm => _es ? 'Confirmar' : 'Confirm';
+  String get daysOnLabel =>
+      _es ? 'Días de tratamiento' : 'Treatment days (on)';
+  String get daysOffLabel => _es ? 'Días de descanso' : 'Rest days (off)';
+  String get selectAtLeastOneDay =>
+      _es ? 'Selecciona al menos un día' : 'Select at least one day';
+
+  /// "Select interval in hours/days/months"
+  String selectIntervalIn(IntervalUnit unit) {
+    final u = intervalUnitName(unit, 2);
+    return _es ? 'Selecciona el intervalo en $u' : 'Select interval in $u';
+  }
+
+  String intervalUnitName(IntervalUnit unit, int value) {
+    final plural = value != 1;
+    if (_es) {
+      switch (unit) {
+        case IntervalUnit.hours:
+          return plural ? 'horas' : 'hora';
+        case IntervalUnit.days:
+          return plural ? 'días' : 'día';
+        case IntervalUnit.months:
+          return plural ? 'meses' : 'mes';
+      }
+    }
+    switch (unit) {
+      case IntervalUnit.hours:
+        return plural ? 'hours' : 'hour';
+      case IntervalUnit.days:
+        return plural ? 'days' : 'day';
+      case IntervalUnit.months:
+        return plural ? 'months' : 'month';
+    }
+  }
+
+  /// Short weekday name, 1=Mon … 7=Sun.
+  String weekdayShort(int weekday) {
+    const es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const en = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return (_es ? es : en)[weekday - 1];
+  }
+
+  /// One-line schedule summary for a treatment.
+  String frequencyLabel(Treatment t) {
+    switch (t.frequencyType) {
+      case FrequencyType.daily:
+        return everyDay;
+      case FrequencyType.interval:
+        final label = _es
+            ? 'Cada ${t.intervalValue} ${intervalUnitName(t.intervalUnit, t.intervalValue)}'
+            : 'Every ${t.intervalValue} ${intervalUnitName(t.intervalUnit, t.intervalValue)}';
+        return label;
+      case FrequencyType.weekdays:
+        return t.weekdays.map(weekdayShort).join(', ');
+      case FrequencyType.cyclic:
+        return _es
+            ? 'Ciclo: ${t.cycleDaysOn} sí / ${t.cycleDaysOff} no'
+            : 'Cycle: ${t.cycleDaysOn} on / ${t.cycleDaysOff} off';
+      case FrequencyType.onDemand:
+        return onDemandOption;
+    }
+  }
+
+  /// Schedule summary plus times of day (when relevant).
+  String scheduleLabel(Treatment t) {
+    final times = t.times.map((x) => x.format()).join(', ');
+    if (times.isEmpty) return frequencyLabel(t);
+    return '${frequencyLabel(t)} · $times';
+  }
+
   String get intervalDaysLabel =>
       _es ? 'Intervalo (días)' : 'Interval (days)';
   String get timesOfDay => _es ? 'Horarios' : 'Times';
@@ -245,6 +331,8 @@ class S {
   String get active => _es ? 'Activo' : 'Active';
 
   String get markGiven => _es ? 'Dosis aplicada' : 'Dose given';
+  String get unmarkGiven =>
+      _es ? 'Desmarcar dosis' : 'Unmark dose';
   String doseGivenSnack(String med) =>
       _es ? 'Dosis de $med registrada' : 'Dose of $med logged';
   String get history => _es ? 'Historial' : 'History';
@@ -297,6 +385,32 @@ class S {
   String get addPetFirst => _es
       ? 'Primero agrega una mascota en la pestaña Mascotas.'
       : 'First add a pet in the Pets tab.';
+
+  // Treatments & medication catalog.
+  String get petLabel => _es ? 'Mascota' : 'Pet';
+  String get medicationLabel => _es ? 'Medicamento' : 'Medication';
+  String get selectMedication =>
+      _es ? 'Selecciona un medicamento' : 'Select a medication';
+  String get newMedication => _es ? 'Nuevo medicamento' : 'New medication';
+  String get addTreatment => _es ? 'Agregar tratamiento' : 'Add treatment';
+  String get editTreatment => _es ? 'Editar tratamiento' : 'Edit treatment';
+  String get deleteTreatment =>
+      _es ? 'Eliminar tratamiento' : 'Delete treatment';
+  String get deleteTreatmentConfirm => _es
+      ? '¿Eliminar este tratamiento y sus recordatorios?'
+      : 'Delete this treatment and its reminders?';
+
+  /// Remaining-days label from [Treatment.remainingDays]:
+  /// null → no expiration date, 0 → ends today, <0 → ended.
+  String remainingDaysLabel(int? days) {
+    if (days == null) {
+      return _es ? 'Sin fecha de expiración' : 'No expiration date';
+    }
+    if (days < 0) return _es ? 'Finalizado' : 'Ended';
+    if (days == 0) return _es ? 'Termina hoy' : 'Ends today';
+    if (_es) return days == 1 ? 'Queda 1 día' : 'Quedan $days días';
+    return days == 1 ? '1 day left' : '$days days left';
+  }
 
   // Vaccinations.
   String get vaccinations => _es ? 'Vacunas' : 'Vaccinations';

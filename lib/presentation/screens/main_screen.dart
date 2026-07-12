@@ -28,17 +28,18 @@ class _MainScreenState extends State<MainScreen> {
         BlocProvider(
           create: (_) => TodayBloc(
             getPets: sl(),
-            getAllMedications: sl(),
+            getAllTreatments: sl(),
             getDoseHistory: sl(),
             logDose: sl(),
+            deleteDoseLog: sl(),
           )..add(const TodayRequested()),
         ),
         BlocProvider(
           create: (_) => TreatmentsBloc(
             getPets: sl(),
-            getAllMedications: sl(),
-            saveMedication: sl(),
-            deleteMedication: sl(),
+            getAllTreatments: sl(),
+            saveTreatment: sl(),
+            deleteTreatment: sl(),
           )..add(const TreatmentsRequested()),
         ),
       ],

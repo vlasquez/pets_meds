@@ -1,9 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../domain/entities/medication.dart';
 import '../../../domain/entities/pet.dart';
-import '../../../domain/usecases/get_all_medications.dart';
+import '../../../domain/entities/treatment.dart';
+import '../../../domain/usecases/delete_dose_log.dart';
+import '../../../domain/usecases/get_all_treatments.dart';
 import '../../../domain/usecases/get_dose_history.dart';
 import '../../../domain/usecases/get_pets.dart';
 import '../../../domain/usecases/log_dose.dart';
@@ -14,22 +15,26 @@ part 'today_state.dart';
 /// Home tab: the treatments scheduled for today, grouped by pet.
 class TodayBloc extends Bloc<TodayEvent, TodayState> {
   final GetPets _getPets;
-  final GetAllMedications _getAllMedications;
+  final GetAllTreatments _getAllTreatments;
   final GetDoseHistory _getDoseHistory;
   final LogDose _logDose;
+  final DeleteDoseLog _deleteDoseLog;
 
   TodayBloc({
     required GetPets getPets,
-    required GetAllMedications getAllMedications,
+    required GetAllTreatments getAllTreatments,
     required GetDoseHistory getDoseHistory,
     required LogDose logDose,
+    required DeleteDoseLog deleteDoseLog,
   })  : _getPets = getPets,
-        _getAllMedications = getAllMedications,
+        _getAllTreatments = getAllTreatments,
         _getDoseHistory = getDoseHistory,
         _logDose = logDose,
+        _deleteDoseLog = deleteDoseLog,
         super(const TodayState()) {
     on<TodayRequested>(_onRequested);
     on<TodayDoseGiven>(_onDoseGiven);
+    on<TodayDoseUnmarked>(_onDoseUnmarked);
   }
 
   Future<void> _onRequested(
@@ -41,14 +46,20 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   Future<void> _onDoseGiven(
       TodayDoseGiven event, Emitter<TodayState> emit) async {
     await _logDose(
-      event.medication,
+      event.treatment,
       notificationTitle: event.notificationTitle,
       notificationBody: event.notificationBody,
     );
     emit(state.copyWith(
       doseLogCount: state.doseLogCount + 1,
-      lastDosedMedName: event.medication.name,
+      lastDosedName: event.treatment.medicationName,
     ));
+    await _emitToday(emit);
+  }
+
+  Future<void> _onDoseUnmarked(
+      TodayDoseUnmarked event, Emitter<TodayState> emit) async {
+    await _deleteDoseLog(event.logId);
     await _emitToday(emit);
   }
 
@@ -59,28 +70,31 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     try {
       final today = DateTime.now();
       final pets = await _getPets();
-      final meds = await _getAllMedications();
+      final treatments = await _getAllTreatments();
 
       final entries = <TodayEntry>[];
       for (final pet in pets) {
-        final petMeds = meds
-            .where((m) => m.petId == pet.id && m.isScheduledOn(today))
+        final petTreatments = treatments
+            .where((t) => t.petId == pet.id && t.isScheduledOn(today))
             .toList();
-        if (petMeds.isEmpty) continue;
+        if (petTreatments.isEmpty) continue;
 
         final history = await _getDoseHistory(pet.id!);
-        final givenTodayIds = history.logs
-            .where((log) => _isSameDay(log.givenAt, today))
-            .map((log) => log.medicationId)
-            .toSet();
+        // Latest log of the day per treatment, so unchecking removes it.
+        final todayLogIds = <int, int>{};
+        for (final log in history.logs.reversed) {
+          if (_isSameDay(log.givenAt, today)) {
+            todayLogIds[log.treatmentId] = log.id!;
+          }
+        }
 
         entries.add(TodayEntry(
           pet: pet,
           items: [
-            for (final med in petMeds)
+            for (final t in petTreatments)
               TodayItem(
-                medication: med,
-                givenToday: givenTodayIds.contains(med.id),
+                treatment: t,
+                todayLogId: todayLogIds[t.id],
               ),
           ],
         ));
