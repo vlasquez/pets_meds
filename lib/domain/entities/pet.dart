@@ -5,6 +5,10 @@ class Pet extends Equatable {
   final int? id;
   final String name;
   final String species; // dog, cat, other
+
+  /// Breed enum name ([DogBreed]/[CatBreed] from breed.dart, by species).
+  final String? breed;
+
   final String? notes;
 
   /// Local file path of the pet's photo, if any.
@@ -16,6 +20,7 @@ class Pet extends Equatable {
     this.id,
     required this.name,
     required this.species,
+    this.breed,
     this.notes,
     this.photoPath,
     this.birthDate,
@@ -25,6 +30,7 @@ class Pet extends Equatable {
     int? id,
     String? name,
     String? species,
+    String? breed,
     String? notes,
     String? photoPath,
     DateTime? birthDate,
@@ -33,6 +39,7 @@ class Pet extends Equatable {
         id: id ?? this.id,
         name: name ?? this.name,
         species: species ?? this.species,
+        breed: breed ?? this.breed,
         notes: notes ?? this.notes,
         photoPath: photoPath ?? this.photoPath,
         birthDate: birthDate ?? this.birthDate,
@@ -53,5 +60,6 @@ class Pet extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, species, notes, photoPath, birthDate];
+  List<Object?> get props =>
+      [id, name, species, breed, notes, photoPath, birthDate];
 }

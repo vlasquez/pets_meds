@@ -199,6 +199,7 @@ class _PetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final age = pet.ageAt(DateTime.now());
+    final breedName = s.breedName(pet.species, pet.breed);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -211,6 +212,9 @@ class _PetHeader extends StatelessWidget {
               children: [
                 Text(pet.name,
                     style: Theme.of(context).textTheme.titleMedium),
+                if (breedName != null)
+                  Text(breedName,
+                      style: Theme.of(context).textTheme.bodyMedium),
                 if (age != null)
                   Text(s.age(age.$1, age.$2),
                       style: Theme.of(context).textTheme.bodyMedium),
