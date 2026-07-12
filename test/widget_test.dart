@@ -124,5 +124,36 @@ void main() {
       expect(od.isScheduledOn(DateTime(2026, 12, 25)), isTrue);
       expect(od.isScheduledOn(DateTime(2026, 6, 30)), isFalse); // before start
     });
+
+    test('hourly interval intakes cover the full 24h cycle', () {
+      TreatmentModel make(int everyHours, ScheduleTime first) =>
+          TreatmentModel(
+            petId: 1,
+            medicationId: 1,
+            doseAmount: 1,
+            doseUnit: DoseUnit.ampoule,
+            frequencyType: FrequencyType.interval,
+            times: [first],
+            intervalValue: everyHours,
+            intervalUnit: IntervalUnit.hours,
+            startDate: DateTime(2026, 7, 1),
+          );
+
+      // 08:00 every 8h -> 08:00, 16:00, 00:00 (3 intakes).
+      expect(
+        make(8, const ScheduleTime(8, 0)).intakeTimesPerDay,
+        const [ScheduleTime(8, 0), ScheduleTime(16, 0), ScheduleTime(0, 0)],
+      );
+      expect(make(8, const ScheduleTime(8, 0)).dosesPerDay, 3);
+
+      // 08:00 every 12h -> 08:00, 20:00 (2 intakes).
+      expect(
+        make(12, const ScheduleTime(8, 0)).intakeTimesPerDay,
+        const [ScheduleTime(8, 0), ScheduleTime(20, 0)],
+      );
+
+      // Every 24h -> just the first intake.
+      expect(make(24, const ScheduleTime(9, 30)).dosesPerDay, 1);
+    });
   });
 }

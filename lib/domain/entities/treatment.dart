@@ -156,10 +156,13 @@ class Treatment extends Equatable {
             final first =
                 times.isEmpty ? const ScheduleTime(8, 0) : times.first;
             if (intervalValue <= 0 || intervalValue >= 24) return [first];
+            // Full 24 h cycle from the first intake, wrapping past
+            // midnight (e.g. 08:00 every 8 h → 08:00, 16:00, 00:00).
             final result = <ScheduleTime>[];
-            var minutes = first.inMinutes;
-            while (minutes < 24 * 60) {
-              result.add(ScheduleTime(minutes ~/ 60, minutes % 60));
+            final start = first.inMinutes;
+            var minutes = start;
+            while (minutes < start + 24 * 60) {
+              result.add(ScheduleTime((minutes ~/ 60) % 24, minutes % 60));
               minutes += intervalValue * 60;
             }
             return result;
