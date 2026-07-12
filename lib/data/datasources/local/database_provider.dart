@@ -62,28 +62,45 @@ class DatabaseProvider {
         if (oldVersion < 7) {
           await _migrateToCatalogAndTreatments(db);
         }
-        if (oldVersion == 7) {
+        if (oldVersion >= 7 && oldVersion < 8) {
           // v8: richer frequency model. (<7 already got the new columns
-          // via the rebuilt treatments table above.)
-          await db.execute(
-              "ALTER TABLE treatments ADD COLUMN intervalValue INTEGER NOT NULL DEFAULT 8");
-          await db.execute(
-              "ALTER TABLE treatments ADD COLUMN intervalUnit TEXT NOT NULL DEFAULT 'hours'");
-          await db.execute(
-              "ALTER TABLE treatments ADD COLUMN weekdays TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE treatments ADD COLUMN cycleDaysOn INTEGER NOT NULL DEFAULT 21");
-          await db.execute(
-              "ALTER TABLE treatments ADD COLUMN cycleDaysOff INTEGER NOT NULL DEFAULT 7");
-          await db.execute(
-              "UPDATE treatments SET intervalValue = intervalDays, intervalUnit = 'days', "
-              "frequencyType = 'interval' WHERE frequencyType = 'intervalDays'");
+          // via the rebuilt treatments table above.) Idempotent: only
+          // adds what's missing, so a previously interrupted upgrade
+          // can't hit 'duplicate column'.
+          final columns = await _tableColumns(db, 'treatments');
+          const added = {
+            'intervalValue': 'INTEGER NOT NULL DEFAULT 8',
+            'intervalUnit': "TEXT NOT NULL DEFAULT 'hours'",
+            'weekdays': "TEXT NOT NULL DEFAULT ''",
+            'cycleDaysOn': 'INTEGER NOT NULL DEFAULT 21',
+            'cycleDaysOff': 'INTEGER NOT NULL DEFAULT 7',
+          };
+          for (final entry in added.entries) {
+            if (!columns.contains(entry.key)) {
+              await db.execute(
+                  'ALTER TABLE treatments ADD COLUMN ${entry.key} ${entry.value}');
+            }
+          }
+          if (columns.contains('intervalDays')) {
+            await db.execute(
+                "UPDATE treatments SET intervalValue = intervalDays, intervalUnit = 'days', "
+                "frequencyType = 'interval' WHERE frequencyType = 'intervalDays'");
+          } else {
+            await db.execute(
+                "UPDATE treatments SET intervalUnit = 'days', frequencyType = 'interval' "
+                "WHERE frequencyType = 'intervalDays'");
+          }
         }
       },
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
     );
+  }
+
+  Future<Set<String>> _tableColumns(Database db, String table) async {
+    final rows = await db.rawQuery('PRAGMA table_info($table)');
+    return rows.map((r) => r['name'] as String).toSet();
   }
 
   Future<void> _createMedicationsTable(Database db) async {
