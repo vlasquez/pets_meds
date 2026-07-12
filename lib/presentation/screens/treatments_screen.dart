@@ -1,101 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entities/medication.dart';
 import '../../domain/entities/pet.dart';
+import '../../domain/entities/treatment.dart';
 import '../../l10n/strings.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/pet_avatar.dart';
-import 'medication_form_screen.dart';
+import 'treatment_form_screen.dart';
 
-/// Treatments tab: all medications across pets. New medications are
-/// assigned to a pet chosen from a picker.
+/// Treatments tab: all treatments across pets. A treatment assigns a
+/// catalog medication to a pet — both are chosen on the form.
 /// Expects a [TreatmentsBloc] to be provided above it.
 class TreatmentsScreen extends StatelessWidget {
   const TreatmentsScreen({super.key});
 
-  void _openForm(BuildContext context, Pet pet, {Medication? medication}) {
+  void _openForm(BuildContext context,
+      {Treatment? treatment, Pet? initialPet}) {
     final s = S.of(context);
     final bloc = context.read<TreatmentsBloc>();
+    final pets = bloc.state.pets;
+    if (pets.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(s.addPetFirst)));
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => MedicationFormScreen(
-          pet: pet,
-          medication: medication,
-          onSave: (med) => bloc.add(TreatmentSaved(
-            medication: med,
+        builder: (_) => TreatmentFormScreen(
+          pets: pets,
+          initialPet: initialPet,
+          treatment: treatment,
+          onSave: (t, pet) => bloc.add(TreatmentSaved(
+            treatment: t,
             notificationTitle: s.reminderTitle(pet.name),
             notificationBody: s.reminderBody(
-                med.name, s.formatDose(med.doseAmount, med.doseUnit)),
+                t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
           )),
         ),
       ),
     );
   }
 
-  Future<void> _add(BuildContext context) async {
-    final s = S.of(context);
-    final state = context.read<TreatmentsBloc>().state;
-    if (state.pets.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(s.addPetFirst)));
-      return;
-    }
-
-    // Assign the medication to a pet.
-    final pet = await showModalBottomSheet<Pet>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(s.selectPet,
-                  style: Theme.of(sheetContext).textTheme.titleMedium),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final p in state.pets)
-                    ListTile(
-                      leading: PetAvatar(pet: p),
-                      title: Text(p.name),
-                      onTap: () => Navigator.of(sheetContext).pop(p),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (pet != null && context.mounted) {
-      _openForm(context, pet);
-    }
-  }
-
-  Future<void> _delete(BuildContext context, Treatment treatment) async {
+  Future<void> _delete(BuildContext context, TreatmentEntry entry) async {
     final s = S.of(context);
     final bloc = context.read<TreatmentsBloc>();
     final confirmed = await showConfirmDialog(
       context,
-      title: s.deleteMedication,
-      content: s.deleteMedicationConfirm,
+      title: s.deleteTreatment,
+      content: s.deleteTreatmentConfirm,
     );
-    if (confirmed) bloc.add(TreatmentDeleted(treatment.medication));
+    if (confirmed) bloc.add(TreatmentDeleted(entry.treatment));
   }
 
-  String _scheduleLabel(S s, Medication med) {
-    final times = med.times.map((t) => t.format()).join(', ');
-    final freq = med.frequencyType == FrequencyType.daily
+  String _scheduleLabel(S s, Treatment t) {
+    final times = t.times.map((x) => x.format()).join(', ');
+    final freq = t.frequencyType == FrequencyType.daily
         ? s.everyDay
-        : s.everyXDays(med.intervalDays);
+        : s.everyXDays(t.intervalDays);
     return '$freq · $times';
   }
 
@@ -113,30 +76,31 @@ class TreatmentsScreen extends StatelessWidget {
             case TreatmentsStatus.failure:
               return EmptyState(message: state.error ?? 'Error');
             case TreatmentsStatus.success:
-              if (state.treatments.isEmpty) {
+              if (state.entries.isEmpty) {
                 return EmptyState(message: s.noTreatments);
               }
               return ListView(
                 padding: const EdgeInsets.only(bottom: 88),
                 children: [
-                  for (final t in state.treatments)
+                  for (final e in state.entries)
                     Card(
                       margin: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       child: ListTile(
-                        leading: PetAvatar(pet: t.pet),
+                        leading: PetAvatar(pet: e.pet),
                         title: Text(
-                            '${t.medication.name} · ${s.formatDose(t.medication.doseAmount, t.medication.doseUnit)}'),
+                            '${e.treatment.medicationName} · ${s.formatDose(e.treatment.doseAmount, e.treatment.doseUnit)}'),
                         subtitle: Text(
-                            '${t.pet.name} · ${_scheduleLabel(s, t.medication)}'),
+                            '${e.pet.name} · ${_scheduleLabel(s, e.treatment)}'),
                         trailing: PopupMenuButton<String>(
                           onSelected: (value) {
                             switch (value) {
                               case 'edit':
-                                _openForm(context, t.pet,
-                                    medication: t.medication);
+                                _openForm(context,
+                                    treatment: e.treatment,
+                                    initialPet: e.pet);
                               case 'delete':
-                                _delete(context, t);
+                                _delete(context, e);
                             }
                           },
                           itemBuilder: (_) => [
@@ -144,17 +108,17 @@ class TreatmentsScreen extends StatelessWidget {
                                 value: 'edit',
                                 child: ListTile(
                                     leading: const Icon(Icons.edit),
-                                    title: Text(s.editMedication))),
+                                    title: Text(s.editTreatment))),
                             PopupMenuItem(
                                 value: 'delete',
                                 child: ListTile(
                                     leading:
                                         const Icon(Icons.delete_outline),
-                                    title: Text(s.deleteMedication))),
+                                    title: Text(s.deleteTreatment))),
                           ],
                         ),
-                        onTap: () => _openForm(context, t.pet,
-                            medication: t.medication),
+                        onTap: () => _openForm(context,
+                            treatment: e.treatment, initialPet: e.pet),
                       ),
                     ),
                 ],
@@ -164,8 +128,8 @@ class TreatmentsScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'treatments_fab', // Unique within the IndexedStack.
-        tooltip: s.addMedication,
-        onPressed: () => _add(context),
+        tooltip: s.addTreatment,
+        onPressed: () => _openForm(context),
         child: const Icon(Icons.add),
       ),
     );

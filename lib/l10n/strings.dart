@@ -298,6 +298,20 @@ class S {
       ? 'Primero agrega una mascota en la pestaña Mascotas.'
       : 'First add a pet in the Pets tab.';
 
+  // Treatments & medication catalog.
+  String get petLabel => _es ? 'Mascota' : 'Pet';
+  String get medicationLabel => _es ? 'Medicamento' : 'Medication';
+  String get selectMedication =>
+      _es ? 'Selecciona un medicamento' : 'Select a medication';
+  String get newMedication => _es ? 'Nuevo medicamento' : 'New medication';
+  String get addTreatment => _es ? 'Agregar tratamiento' : 'Add treatment';
+  String get editTreatment => _es ? 'Editar tratamiento' : 'Edit treatment';
+  String get deleteTreatment =>
+      _es ? 'Eliminar tratamiento' : 'Delete treatment';
+  String get deleteTreatmentConfirm => _es
+      ? '¿Eliminar este tratamiento y sus recordatorios?'
+      : 'Delete this treatment and its reminders?';
+
   // Vaccinations.
   String get vaccinations => _es ? 'Vacunas' : 'Vaccinations';
   String get addVaccination => _es ? 'Agregar vacuna' : 'Add vaccination';

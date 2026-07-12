@@ -1,33 +1,33 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../domain/entities/medication.dart';
 import '../../../domain/entities/pet.dart';
-import '../../../domain/usecases/delete_medication.dart';
-import '../../../domain/usecases/get_all_medications.dart';
+import '../../../domain/entities/treatment.dart';
+import '../../../domain/usecases/delete_treatment.dart';
+import '../../../domain/usecases/get_all_treatments.dart';
 import '../../../domain/usecases/get_pets.dart';
-import '../../../domain/usecases/save_medication.dart';
+import '../../../domain/usecases/save_treatment.dart';
 
 part 'treatments_event.dart';
 part 'treatments_state.dart';
 
-/// Treatments tab: the full medication list across pets, with
-/// add/edit (assigning the medication to a pet) and delete.
+/// Treatments tab: the full treatment list across pets, with
+/// add/edit (assigning a catalog medication to a pet) and delete.
 class TreatmentsBloc extends Bloc<TreatmentsEvent, TreatmentsState> {
   final GetPets _getPets;
-  final GetAllMedications _getAllMedications;
-  final SaveMedication _saveMedication;
-  final DeleteMedication _deleteMedication;
+  final GetAllTreatments _getAllTreatments;
+  final SaveTreatment _saveTreatment;
+  final DeleteTreatment _deleteTreatment;
 
   TreatmentsBloc({
     required GetPets getPets,
-    required GetAllMedications getAllMedications,
-    required SaveMedication saveMedication,
-    required DeleteMedication deleteMedication,
+    required GetAllTreatments getAllTreatments,
+    required SaveTreatment saveTreatment,
+    required DeleteTreatment deleteTreatment,
   })  : _getPets = getPets,
-        _getAllMedications = getAllMedications,
-        _saveMedication = saveMedication,
-        _deleteMedication = deleteMedication,
+        _getAllTreatments = getAllTreatments,
+        _saveTreatment = saveTreatment,
+        _deleteTreatment = deleteTreatment,
         super(const TreatmentsState()) {
     on<TreatmentsRequested>(_onRequested);
     on<TreatmentSaved>(_onSaved);
@@ -42,8 +42,8 @@ class TreatmentsBloc extends Bloc<TreatmentsEvent, TreatmentsState> {
 
   Future<void> _onSaved(
       TreatmentSaved event, Emitter<TreatmentsState> emit) async {
-    await _saveMedication(
-      event.medication,
+    await _saveTreatment(
+      event.treatment,
       notificationTitle: event.notificationTitle,
       notificationBody: event.notificationBody,
     );
@@ -52,21 +52,21 @@ class TreatmentsBloc extends Bloc<TreatmentsEvent, TreatmentsState> {
 
   Future<void> _onDeleted(
       TreatmentDeleted event, Emitter<TreatmentsState> emit) async {
-    await _deleteMedication(event.medication);
+    await _deleteTreatment(event.treatment);
     await _emitTreatments(emit);
   }
 
   Future<void> _emitTreatments(Emitter<TreatmentsState> emit) async {
     try {
       final pets = await _getPets();
-      final meds = await _getAllMedications();
+      final treatments = await _getAllTreatments();
       final petsById = {for (final p in pets) p.id!: p};
       emit(state.copyWith(
         status: TreatmentsStatus.success,
-        treatments: [
-          for (final med in meds)
-            if (petsById.containsKey(med.petId))
-              Treatment(medication: med, pet: petsById[med.petId]!),
+        entries: [
+          for (final t in treatments)
+            if (petsById.containsKey(t.petId))
+              TreatmentEntry(treatment: t, pet: petsById[t.petId]!),
         ],
         pets: pets,
       ));

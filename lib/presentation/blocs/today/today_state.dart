@@ -2,15 +2,15 @@ part of 'today_bloc.dart';
 
 enum TodayStatus { initial, loading, success, failure }
 
-/// A medication scheduled today plus whether a dose was already logged.
+/// A treatment scheduled today plus whether a dose was already logged.
 final class TodayItem extends Equatable {
-  final Medication medication;
+  final Treatment treatment;
   final bool givenToday;
 
-  const TodayItem({required this.medication, required this.givenToday});
+  const TodayItem({required this.treatment, required this.givenToday});
 
   @override
-  List<Object?> get props => [medication, givenToday];
+  List<Object?> get props => [treatment, givenToday];
 }
 
 /// A pet with its treatments scheduled for today.
@@ -30,7 +30,7 @@ final class TodayState extends Equatable {
 
   /// Incremented on each dose logged from Home (for a snackbar via listener).
   final int doseLogCount;
-  final String? lastDosedMedName;
+  final String? lastDosedName;
 
   final String? error;
 
@@ -38,7 +38,7 @@ final class TodayState extends Equatable {
     this.status = TodayStatus.initial,
     this.entries = const [],
     this.doseLogCount = 0,
-    this.lastDosedMedName,
+    this.lastDosedName,
     this.error,
   });
 
@@ -46,18 +46,18 @@ final class TodayState extends Equatable {
     TodayStatus? status,
     List<TodayEntry>? entries,
     int? doseLogCount,
-    String? lastDosedMedName,
+    String? lastDosedName,
     String? error,
   }) =>
       TodayState(
         status: status ?? this.status,
         entries: entries ?? this.entries,
         doseLogCount: doseLogCount ?? this.doseLogCount,
-        lastDosedMedName: lastDosedMedName ?? this.lastDosedMedName,
+        lastDosedName: lastDosedName ?? this.lastDosedName,
         error: error,
       );
 
   @override
   List<Object?> get props =>
-      [status, entries, doseLogCount, lastDosedMedName, error];
+      [status, entries, doseLogCount, lastDosedName, error];
 }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entities/medication.dart';
 import '../../domain/entities/pet.dart';
+import '../../domain/entities/treatment.dart';
 import '../../domain/entities/vaccination.dart';
 import '../../injection.dart';
 import '../../l10n/strings.dart';
-import '../blocs/medications/medications_bloc.dart';
+import '../blocs/pet_treatments/pet_treatments_bloc.dart';
 import '../blocs/pets/pets_bloc.dart';
 import '../blocs/vaccinations/vaccinations_bloc.dart';
 import '../blocs/weight/weight_bloc.dart';
@@ -14,12 +14,12 @@ import '../widgets/add_vaccination_dialog.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/log_weight_dialog.dart';
-import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
+import '../widgets/treatment_card.dart';
 import '../widgets/weight_chart.dart';
 import 'history_screen.dart';
-import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
+import 'treatment_form_screen.dart';
 import 'weight_history_screen.dart';
 
 class PetDetailScreen extends StatelessWidget {
@@ -31,13 +31,13 @@ class PetDetailScreen extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => MedicationsBloc(
+          create: (_) => PetTreatmentsBloc(
             pet: pet,
-            getMedications: sl(),
-            saveMedication: sl(),
-            deleteMedication: sl(),
+            getTreatments: sl(),
+            saveTreatment: sl(),
+            deleteTreatment: sl(),
             logDose: sl(),
-          )..add(const MedicationsRequested()),
+          )..add(const PetTreatmentsRequested()),
         ),
         BlocProvider(
           create: (_) => WeightBloc(
@@ -65,25 +65,26 @@ class _PetDetailView extends StatelessWidget {
   final Pet pet;
   const _PetDetailView({required this.pet});
 
-  void _markGiven(BuildContext context, Medication med) {
+  void _markGiven(BuildContext context, Treatment treatment) {
     final s = S.of(context);
-    context.read<MedicationsBloc>().add(DoseMarkedGiven(
-          medication: med,
+    context.read<PetTreatmentsBloc>().add(DoseMarkedGiven(
+          treatment: treatment,
           notificationTitle: s.reminderTitle(pet.name),
-          notificationBody: s.reminderBody(
-              med.name, s.formatDose(med.doseAmount, med.doseUnit)),
+          notificationBody: s.reminderBody(treatment.medicationName,
+              s.formatDose(treatment.doseAmount, treatment.doseUnit)),
         ));
   }
 
-  Future<void> _deleteMedication(BuildContext context, Medication med) async {
+  Future<void> _deleteTreatment(
+      BuildContext context, Treatment treatment) async {
     final s = S.of(context);
-    final bloc = context.read<MedicationsBloc>();
+    final bloc = context.read<PetTreatmentsBloc>();
     final confirmed = await showConfirmDialog(
       context,
-      title: s.deleteMedication,
-      content: s.deleteMedicationConfirm,
+      title: s.deleteTreatment,
+      content: s.deleteTreatmentConfirm,
     );
-    if (confirmed) bloc.add(MedicationDeleted(med));
+    if (confirmed) bloc.add(PetTreatmentDeleted(treatment));
   }
 
   Future<void> _deletePet(BuildContext context) async {
@@ -101,13 +102,23 @@ class _PetDetailView extends StatelessWidget {
     }
   }
 
-  void _openMedicationForm(BuildContext context, {Medication? medication}) {
-    final bloc = context.read<MedicationsBloc>();
+  void _openTreatmentForm(BuildContext context,
+      {Treatment? treatment, required Pet currentPet}) {
+    final s = S.of(context);
+    final bloc = context.read<PetTreatmentsBloc>();
+    final pets = context.read<PetsBloc>().state.pets;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: bloc,
-          child: MedicationFormScreen(pet: pet, medication: medication),
+        builder: (_) => TreatmentFormScreen(
+          pets: pets.isEmpty ? [currentPet] : pets,
+          initialPet: currentPet,
+          treatment: treatment,
+          onSave: (t, forPet) => bloc.add(PetTreatmentSaved(
+            treatment: t,
+            notificationTitle: s.reminderTitle(forPet.name),
+            notificationBody: s.reminderBody(t.medicationName,
+                s.formatDose(t.doseAmount, t.doseUnit)),
+          )),
         ),
       ),
     );
@@ -163,12 +174,11 @@ class _PetDetailView extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocListener<MedicationsBloc, MedicationsState>(
+      body: BlocListener<PetTreatmentsBloc, PetTreatmentsState>(
         listenWhen: (prev, curr) => curr.doseLogCount > prev.doseLogCount,
         listener: (context, state) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(s.doseGivenSnack(state.lastDosedMedName ?? ''))),
+            SnackBar(content: Text(s.doseGivenSnack(state.lastDosedName ?? ''))),
           );
         },
         child: ListView(
@@ -180,19 +190,21 @@ class _PetDetailView extends StatelessWidget {
             const Divider(height: 1),
             const _VaccinationsSection(),
             const Divider(height: 1),
-            _MedicationsSection(
+            _TreatmentsSection(
               onMarkGiven: _markGiven,
-              onEdit: (ctx, med) =>
-                  _openMedicationForm(ctx, medication: med),
-              onDelete: _deleteMedication,
+              onEdit: (ctx, t) => _openTreatmentForm(ctx,
+                  treatment: t, currentPet: currentPet),
+              onDelete: _deleteTreatment,
             ),
           ],
         ),
       ),
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton(
-          tooltip: s.addMedication,
-          onPressed: () => _openMedicationForm(context),
+          heroTag: 'pet_detail_fab',
+          tooltip: s.addTreatment,
+          onPressed: () =>
+              _openTreatmentForm(context, currentPet: currentPet),
           child: const Icon(Icons.add),
         ),
       ),
@@ -200,7 +212,7 @@ class _PetDetailView extends StatelessWidget {
   }
 }
 
-/// Header with photo and age.
+/// Header with photo, breed and age.
 class _PetHeader extends StatelessWidget {
   final Pet pet;
   const _PetHeader({required this.pet});
@@ -381,13 +393,13 @@ class _VaccinationsSection extends StatelessWidget {
   }
 }
 
-/// Medications section: title + cards (or empty message).
-class _MedicationsSection extends StatelessWidget {
-  final void Function(BuildContext, Medication) onMarkGiven;
-  final void Function(BuildContext, Medication) onEdit;
-  final void Function(BuildContext, Medication) onDelete;
+/// Treatments section: title + cards (or empty message).
+class _TreatmentsSection extends StatelessWidget {
+  final void Function(BuildContext, Treatment) onMarkGiven;
+  final void Function(BuildContext, Treatment) onEdit;
+  final void Function(BuildContext, Treatment) onDelete;
 
-  const _MedicationsSection({
+  const _TreatmentsSection({
     required this.onMarkGiven,
     required this.onEdit,
     required this.onDelete,
@@ -401,36 +413,36 @@ class _MedicationsSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Text(s.medications,
+          child: Text(s.treatmentsTab,
               style: Theme.of(context).textTheme.titleMedium),
         ),
-        BlocBuilder<MedicationsBloc, MedicationsState>(
+        BlocBuilder<PetTreatmentsBloc, PetTreatmentsState>(
           builder: (context, state) {
             switch (state.status) {
-              case MedicationsStatus.initial:
-              case MedicationsStatus.loading:
+              case PetTreatmentsStatus.initial:
+              case PetTreatmentsStatus.loading:
                 return const Padding(
                   padding: EdgeInsets.all(24),
                   child: Center(child: CircularProgressIndicator()),
                 );
-              case MedicationsStatus.failure:
+              case PetTreatmentsStatus.failure:
                 return EmptyState(message: state.error ?? 'Error');
-              case MedicationsStatus.success:
-                if (state.medications.isEmpty) {
+              case PetTreatmentsStatus.success:
+                if (state.treatments.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Text(s.noMedications,
+                    child: Text(s.noTreatments,
                         style: Theme.of(context).textTheme.bodyMedium),
                   );
                 }
                 return Column(
                   children: [
-                    for (final med in state.medications)
-                      MedicationCard(
-                        medication: med,
-                        onMarkGiven: () => onMarkGiven(context, med),
-                        onEdit: () => onEdit(context, med),
-                        onDelete: () => onDelete(context, med),
+                    for (final t in state.treatments)
+                      TreatmentCard(
+                        treatment: t,
+                        onMarkGiven: () => onMarkGiven(context, t),
+                        onEdit: () => onEdit(context, t),
+                        onDelete: () => onDelete(context, t),
                       ),
                   ],
                 );

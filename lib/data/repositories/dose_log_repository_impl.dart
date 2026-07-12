@@ -16,7 +16,7 @@ class DoseLogRepositoryImpl implements DoseLogRepository {
     final id = await _local.insert(DoseLogModel.fromEntity(log));
     return DoseLog(
       id: id,
-      medicationId: log.medicationId,
+      treatmentId: log.treatmentId,
       petId: log.petId,
       givenAt: log.givenAt,
       note: log.note,

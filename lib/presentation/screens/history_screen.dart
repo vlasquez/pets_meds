@@ -41,13 +41,13 @@ class HistoryScreen extends StatelessWidget {
                   itemCount: state.logs.length,
                   itemBuilder: (context, i) {
                     final log = state.logs[i];
-                    final med = state.medicationsById[log.medicationId];
+                    final t = state.treatmentsById[log.treatmentId];
                     return ListTile(
                       leading: const Icon(Icons.check_circle,
                           color: Colors.green),
-                      title: Text(med == null
-                          ? '#${log.medicationId}'
-                          : '${med.name} · ${s.formatDose(med.doseAmount, med.doseUnit)}'),
+                      title: Text(t == null
+                          ? '#${log.treatmentId}'
+                          : '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
                       subtitle: Text(_fmt(log.givenAt)),
                     );
                   },

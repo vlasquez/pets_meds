@@ -1,28 +1,16 @@
 import '../entities/medication.dart';
 import '../repositories/medication_repository.dart';
-import '../repositories/reminder_scheduler.dart';
 
-/// Inserts or updates a medication and (re)schedules its reminders.
+/// Inserts (id == null) or updates a catalog medication.
 class SaveMedication {
-  final MedicationRepository _medications;
-  final ReminderScheduler _scheduler;
+  final MedicationRepository _repository;
+  const SaveMedication(this._repository);
 
-  const SaveMedication(this._medications, this._scheduler);
-
-  Future<Medication> call(
-    Medication medication, {
-    required String notificationTitle,
-    required String notificationBody,
-  }) async {
-    Medication saved;
+  Future<Medication> call(Medication medication) async {
     if (medication.id == null) {
-      saved = await _medications.insertMedication(medication);
-    } else {
-      await _medications.updateMedication(medication);
-      saved = medication;
+      return _repository.insertMedication(medication);
     }
-    await _scheduler.schedule(saved,
-        title: notificationTitle, body: notificationBody);
-    return saved;
+    await _repository.updateMedication(medication);
+    return medication;
   }
 }

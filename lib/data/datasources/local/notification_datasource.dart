@@ -2,12 +2,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../../../domain/entities/medication.dart';
 import '../../../domain/entities/schedule_time.dart';
+import '../../../domain/entities/treatment.dart';
 import '../../../domain/entities/vaccination.dart';
 
 /// Wraps flutter_local_notifications: permission setup and
-/// (re)scheduling of medication reminders.
+/// (re)scheduling of treatment and vaccination reminders.
 class NotificationDataSource {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -44,21 +44,24 @@ class NotificationDataSource {
         iOS: DarwinNotificationDetails(),
       );
 
-  /// One notification id per (medication, time slot).
-  int _notificationId(int medicationId, int timeIndex) =>
-      medicationId * 100 + timeIndex;
+  /// One notification id per (treatment, time slot).
+  int _notificationId(int treatmentId, int timeIndex) =>
+      treatmentId * 100 + timeIndex;
 
-  Future<void> scheduleMedication(Medication med,
+  Future<void> scheduleTreatment(Treatment treatment,
       {required String title, required String body}) async {
-    await cancelMedication(med);
-    if (!med.active || med.id == null) return;
-    if (med.endDate != null && med.endDate!.isBefore(DateTime.now())) return;
+    await cancelTreatment(treatment);
+    if (!treatment.active || treatment.id == null) return;
+    if (treatment.endDate != null &&
+        treatment.endDate!.isBefore(DateTime.now())) {
+      return;
+    }
 
-    for (var i = 0; i < med.times.length; i++) {
-      final time = med.times[i];
-      final id = _notificationId(med.id!, i);
+    for (var i = 0; i < treatment.times.length; i++) {
+      final time = treatment.times[i];
+      final id = _notificationId(treatment.id!, i);
 
-      if (med.frequencyType == FrequencyType.daily) {
+      if (treatment.frequencyType == FrequencyType.daily) {
         await _plugin.zonedSchedule(
           id,
           title,
@@ -73,7 +76,7 @@ class NotificationDataSource {
       } else {
         // Every N days: schedule the next single occurrence.
         // Rescheduled when a dose is logged or when the app starts.
-        final next = _nextIntervalOccurrence(med, time);
+        final next = _nextIntervalOccurrence(treatment, time);
         if (next != null) {
           await _plugin.zonedSchedule(
             id,
@@ -90,16 +93,16 @@ class NotificationDataSource {
     }
   }
 
-  Future<void> cancelMedication(Medication med) async {
-    if (med.id == null) return;
-    // Cancel up to 100 possible time slots for this medication.
+  Future<void> cancelTreatment(Treatment treatment) async {
+    if (treatment.id == null) return;
+    // Cancel up to 100 possible time slots for this treatment.
     for (var i = 0; i < 100; i++) {
-      await _plugin.cancel(_notificationId(med.id!, i));
+      await _plugin.cancel(_notificationId(treatment.id!, i));
     }
   }
 
   /// Vaccination ids live in their own range to avoid colliding with
-  /// medication reminder ids (medicationId * 100 + timeIndex).
+  /// treatment reminder ids (treatmentId * 100 + timeIndex).
   int _vaccinationNotificationId(int vaccinationId) =>
       2000000000 - vaccinationId;
 
@@ -141,16 +144,18 @@ class NotificationDataSource {
     return scheduled;
   }
 
-  tz.TZDateTime? _nextIntervalOccurrence(Medication med, ScheduleTime time) {
+  tz.TZDateTime? _nextIntervalOccurrence(
+      Treatment treatment, ScheduleTime time) {
     final now = tz.TZDateTime.now(tz.local);
-    var candidate = tz.TZDateTime(tz.local, med.startDate.year,
-        med.startDate.month, med.startDate.day, time.hour, time.minute);
+    var candidate = tz.TZDateTime(tz.local, treatment.startDate.year,
+        treatment.startDate.month, treatment.startDate.day, time.hour,
+        time.minute);
     while (!candidate.isAfter(now)) {
-      candidate = candidate.add(Duration(days: med.intervalDays));
+      candidate = candidate.add(Duration(days: treatment.intervalDays));
     }
-    if (med.endDate != null &&
-        candidate.isAfter(tz.TZDateTime(tz.local, med.endDate!.year,
-            med.endDate!.month, med.endDate!.day, 23, 59))) {
+    if (treatment.endDate != null &&
+        candidate.isAfter(tz.TZDateTime(tz.local, treatment.endDate!.year,
+            treatment.endDate!.month, treatment.endDate!.day, 23, 59))) {
       return null;
     }
     return candidate;

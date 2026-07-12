@@ -1,21 +1,21 @@
 import '../entities/pet.dart';
-import '../repositories/medication_repository.dart';
 import '../repositories/pet_repository.dart';
 import '../repositories/reminder_scheduler.dart';
+import '../repositories/treatment_repository.dart';
 
-/// Deletes a pet, cancelling the reminders of all its medications first.
-/// (Medications and dose logs are removed by cascade in the data layer.)
+/// Deletes a pet, cancelling the reminders of all its treatments first.
+/// (Treatments and dose logs are removed by cascade in the data layer.)
 class DeletePet {
   final PetRepository _pets;
-  final MedicationRepository _medications;
+  final TreatmentRepository _treatments;
   final ReminderScheduler _scheduler;
 
-  const DeletePet(this._pets, this._medications, this._scheduler);
+  const DeletePet(this._pets, this._treatments, this._scheduler);
 
   Future<void> call(Pet pet) async {
-    final meds = await _medications.getMedicationsForPet(pet.id!);
-    for (final med in meds) {
-      await _scheduler.cancel(med);
+    final treatments = await _treatments.getTreatmentsForPet(pet.id!);
+    for (final treatment in treatments) {
+      await _scheduler.cancel(treatment);
     }
     await _pets.deletePet(pet.id!);
   }

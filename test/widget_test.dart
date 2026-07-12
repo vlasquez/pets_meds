@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pet_meds/data/models/medication_model.dart';
+import 'package:pet_meds/data/models/treatment_model.dart';
 import 'package:pet_meds/domain/entities/dose_unit.dart';
-import 'package:pet_meds/domain/entities/medication.dart';
 import 'package:pet_meds/domain/entities/schedule_time.dart';
+import 'package:pet_meds/domain/entities/treatment.dart';
 
 void main() {
   group('ScheduleTime', () {
@@ -22,19 +22,19 @@ void main() {
     });
   });
 
-  group('MedicationModel', () {
+  group('TreatmentModel', () {
     test('encodes and decodes times', () {
       const times = [ScheduleTime(8, 0), ScheduleTime(20, 30)];
-      final encoded = MedicationModel.encodeTimes(times);
+      final encoded = TreatmentModel.encodeTimes(times);
       expect(encoded, '08:00,20:30');
-      expect(MedicationModel.decodeTimes(encoded), times);
+      expect(TreatmentModel.decodeTimes(encoded), times);
     });
 
     test('round-trips through a SQLite row map', () {
-      final med = MedicationModel(
+      final treatment = TreatmentModel(
         id: 1,
         petId: 2,
-        name: 'Amoxicillin',
+        medicationId: 3,
         doseAmount: 5,
         doseUnit: DoseUnit.milligram,
         frequencyType: FrequencyType.intervalDays,
@@ -45,8 +45,26 @@ void main() {
         active: true,
         notes: 'with food',
       );
-      final restored = MedicationModel.fromMap(med.toMap());
-      expect(restored, med);
+      // medicationName is a joined display column, not persisted.
+      final restored = TreatmentModel.fromMap(treatment.toMap());
+      expect(restored, treatment);
+    });
+
+    test('isScheduledOn respects interval days', () {
+      final treatment = TreatmentModel(
+        petId: 1,
+        medicationId: 1,
+        doseAmount: 1,
+        doseUnit: DoseUnit.pill,
+        frequencyType: FrequencyType.intervalDays,
+        times: const [ScheduleTime(9, 0)],
+        intervalDays: 3,
+        startDate: DateTime(2026, 7, 1),
+      );
+      expect(treatment.isScheduledOn(DateTime(2026, 7, 1)), isTrue);
+      expect(treatment.isScheduledOn(DateTime(2026, 7, 2)), isFalse);
+      expect(treatment.isScheduledOn(DateTime(2026, 7, 4)), isTrue);
+      expect(treatment.isScheduledOn(DateTime(2026, 6, 30)), isFalse);
     });
   });
 }

@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/medication.dart';
+import '../../domain/entities/treatment.dart';
 import '../../l10n/strings.dart';
 
-/// Card showing a medication with its schedule and an actions menu.
-class MedicationCard extends StatelessWidget {
-  final Medication medication;
+/// Card showing a treatment with its schedule and an actions menu.
+class TreatmentCard extends StatelessWidget {
+  final Treatment treatment;
   final VoidCallback onMarkGiven;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const MedicationCard({
+  const TreatmentCard({
     super.key,
-    required this.medication,
+    required this.treatment,
     required this.onMarkGiven,
     required this.onEdit,
     required this.onDelete,
   });
 
   String _scheduleLabel(S s) {
-    final times = medication.times.map((t) => t.format()).join(', ');
-    final freq = medication.frequencyType == FrequencyType.daily
+    final times = treatment.times.map((t) => t.format()).join(', ');
+    final freq = treatment.frequencyType == FrequencyType.daily
         ? s.everyDay
-        : s.everyXDays(medication.intervalDays);
+        : s.everyXDays(treatment.intervalDays);
     return '$freq · $times';
   }
 
@@ -33,13 +33,13 @@ class MedicationCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: medication.active
+          backgroundColor: treatment.active
               ? Theme.of(context).colorScheme.primaryContainer
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           child: const Icon(Icons.medication),
         ),
         title: Text(
-            '${medication.name} · ${s.formatDose(medication.doseAmount, medication.doseUnit)}'),
+            '${treatment.medicationName} · ${s.formatDose(treatment.doseAmount, treatment.doseUnit)}'),
         subtitle: Text(_scheduleLabel(s)),
         trailing: PopupMenuButton<String>(
           onSelected: (value) {
@@ -62,12 +62,12 @@ class MedicationCard extends StatelessWidget {
                 value: 'edit',
                 child: ListTile(
                     leading: const Icon(Icons.edit),
-                    title: Text(s.editMedication))),
+                    title: Text(s.editTreatment))),
             PopupMenuItem(
                 value: 'delete',
                 child: ListTile(
                     leading: const Icon(Icons.delete_outline),
-                    title: Text(s.deleteMedication))),
+                    title: Text(s.deleteTreatment))),
           ],
         ),
         onTap: onMarkGiven,
