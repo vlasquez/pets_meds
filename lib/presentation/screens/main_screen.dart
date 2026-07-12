@@ -31,6 +31,7 @@ class _MainScreenState extends State<MainScreen> {
             getAllTreatments: sl(),
             getDoseHistory: sl(),
             logDose: sl(),
+            deleteDoseLog: sl(),
           )..add(const TodayRequested()),
         ),
         BlocProvider(

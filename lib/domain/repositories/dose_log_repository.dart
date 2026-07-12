@@ -4,4 +4,5 @@ import '../entities/dose_log.dart';
 abstract interface class DoseLogRepository {
   Future<List<DoseLog>> getDoseLogsForPet(int petId, {int limit});
   Future<DoseLog> insertDoseLog(DoseLog log);
+  Future<void> deleteDoseLog(int id);
 }

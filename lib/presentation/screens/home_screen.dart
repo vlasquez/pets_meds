@@ -112,8 +112,14 @@ class _TodayTreatmentTile extends StatelessWidget {
             '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
         subtitle: Text(times),
         trailing: item.givenToday
-            ? Icon(Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary)
+            ? IconButton(
+                icon: Icon(Icons.check_circle,
+                    color: Theme.of(context).colorScheme.primary),
+                tooltip: s.unmarkGiven,
+                onPressed: () => context
+                    .read<TodayBloc>()
+                    .add(TodayDoseUnmarked(item.todayLogId!)),
+              )
             : IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: s.markGiven,

@@ -26,3 +26,12 @@ final class TodayDoseGiven extends TodayEvent {
   @override
   List<Object?> get props => [treatment, notificationTitle, notificationBody];
 }
+
+/// Unchecks a treatment on the Home tab: removes today's dose log.
+final class TodayDoseUnmarked extends TodayEvent {
+  final int logId;
+  const TodayDoseUnmarked(this.logId);
+
+  @override
+  List<Object?> get props => [logId];
+}

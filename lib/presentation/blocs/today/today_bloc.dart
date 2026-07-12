@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/pet.dart';
 import '../../../domain/entities/treatment.dart';
+import '../../../domain/usecases/delete_dose_log.dart';
 import '../../../domain/usecases/get_all_treatments.dart';
 import '../../../domain/usecases/get_dose_history.dart';
 import '../../../domain/usecases/get_pets.dart';
@@ -17,19 +18,23 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
   final GetAllTreatments _getAllTreatments;
   final GetDoseHistory _getDoseHistory;
   final LogDose _logDose;
+  final DeleteDoseLog _deleteDoseLog;
 
   TodayBloc({
     required GetPets getPets,
     required GetAllTreatments getAllTreatments,
     required GetDoseHistory getDoseHistory,
     required LogDose logDose,
+    required DeleteDoseLog deleteDoseLog,
   })  : _getPets = getPets,
         _getAllTreatments = getAllTreatments,
         _getDoseHistory = getDoseHistory,
         _logDose = logDose,
+        _deleteDoseLog = deleteDoseLog,
         super(const TodayState()) {
     on<TodayRequested>(_onRequested);
     on<TodayDoseGiven>(_onDoseGiven);
+    on<TodayDoseUnmarked>(_onDoseUnmarked);
   }
 
   Future<void> _onRequested(
@@ -52,6 +57,12 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     await _emitToday(emit);
   }
 
+  Future<void> _onDoseUnmarked(
+      TodayDoseUnmarked event, Emitter<TodayState> emit) async {
+    await _deleteDoseLog(event.logId);
+    await _emitToday(emit);
+  }
+
   static bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
@@ -69,10 +80,13 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         if (petTreatments.isEmpty) continue;
 
         final history = await _getDoseHistory(pet.id!);
-        final givenTodayIds = history.logs
-            .where((log) => _isSameDay(log.givenAt, today))
-            .map((log) => log.treatmentId)
-            .toSet();
+        // Latest log of the day per treatment, so unchecking removes it.
+        final todayLogIds = <int, int>{};
+        for (final log in history.logs.reversed) {
+          if (_isSameDay(log.givenAt, today)) {
+            todayLogIds[log.treatmentId] = log.id!;
+          }
+        }
 
         entries.add(TodayEntry(
           pet: pet,
@@ -80,7 +94,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
             for (final t in petTreatments)
               TodayItem(
                 treatment: t,
-                givenToday: givenTodayIds.contains(t.id),
+                todayLogId: todayLogIds[t.id],
               ),
           ],
         ));

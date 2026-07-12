@@ -245,6 +245,8 @@ class S {
   String get active => _es ? 'Activo' : 'Active';
 
   String get markGiven => _es ? 'Dosis aplicada' : 'Dose given';
+  String get unmarkGiven =>
+      _es ? 'Desmarcar dosis' : 'Unmark dose';
   String doseGivenSnack(String med) =>
       _es ? 'Dosis de $med registrada' : 'Dose of $med logged';
   String get history => _es ? 'Historial' : 'History';

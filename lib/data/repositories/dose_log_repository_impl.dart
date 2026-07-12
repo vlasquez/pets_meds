@@ -22,4 +22,7 @@ class DoseLogRepositoryImpl implements DoseLogRepository {
       note: log.note,
     );
   }
+
+  @override
+  Future<void> deleteDoseLog(int id) => _local.delete(id);
 }

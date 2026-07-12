@@ -25,6 +25,7 @@ import 'domain/repositories/treatment_repository.dart';
 import 'domain/repositories/vaccination_reminder_scheduler.dart';
 import 'domain/repositories/vaccination_repository.dart';
 import 'domain/repositories/weight_repository.dart';
+import 'domain/usecases/delete_dose_log.dart';
 import 'domain/usecases/delete_pet.dart';
 import 'domain/usecases/delete_treatment.dart';
 import 'domain/usecases/delete_vaccination.dart';
@@ -86,6 +87,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => SaveTreatment(sl(), sl()));
   sl.registerLazySingleton(() => DeleteTreatment(sl(), sl()));
   sl.registerLazySingleton(() => LogDose(sl(), sl()));
+  sl.registerLazySingleton(() => DeleteDoseLog(sl()));
   sl.registerLazySingleton(() => GetDoseHistory(sl(), sl()));
   sl.registerLazySingleton(() => GetWeightHistory(sl()));
   sl.registerLazySingleton(() => LogWeight(sl()));
