@@ -248,6 +248,8 @@ class S {
   String get cyclicOption => _es ? 'Modo cíclico' : 'Cyclic mode';
   String get onDemandOption => _es ? 'A demanda' : 'On demand';
   String get remindEvery => _es ? 'Recordar cada' : 'Remind every';
+  String get firstIntakeTime =>
+      _es ? 'Hora de la primera toma' : 'First intake time';
   String get confirm => _es ? 'Confirmar' : 'Confirm';
   String get daysOnLabel =>
       _es ? 'Días de tratamiento' : 'Treatment days (on)';

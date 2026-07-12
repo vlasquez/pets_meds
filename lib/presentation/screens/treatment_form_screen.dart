@@ -88,11 +88,13 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
     _loadMedications();
   }
 
-  /// Whether the schedule uses times of day at all.
+  bool get _isHourlyInterval =>
+      _frequency.type == FrequencyType.interval &&
+      _frequency.intervalUnit == IntervalUnit.hours;
+
+  /// Whether the schedule uses the times-of-day chips.
   bool get _usesTimes =>
-      _frequency.type != FrequencyType.onDemand &&
-      !(_frequency.type == FrequencyType.interval &&
-          _frequency.intervalUnit == IntervalUnit.hours);
+      _frequency.type != FrequencyType.onDemand && !_isHourlyInterval;
 
   /// Whether multiple times per day make sense (daily/weekdays/cyclic).
   bool get _multipleTimes =>
@@ -191,15 +193,16 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
     }
     if (medication == null) return;
 
-    // Times only where the schedule uses them; day/month intervals
-    // take a single time of day.
+    // Times only where the schedule uses them; day/month intervals take
+    // a single time of day; hourly intervals keep the first intake time
+    // (the anchor from which the day's intake hours are generated).
     final List<ScheduleTime> times;
-    if (!_usesTimes) {
+    if (_frequency.type == FrequencyType.onDemand) {
       times = const [];
-    } else if (_multipleTimes) {
-      times = _times;
-    } else {
+    } else if (_isHourlyInterval || !_multipleTimes) {
       times = [_times.first];
+    } else {
+      times = _times;
     }
 
     final treatment = Treatment(
@@ -335,6 +338,25 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: _openFrequencyScreen,
             ),
+            if (_isHourlyInterval)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.schedule),
+                title: Text(s.firstIntakeTime),
+                subtitle: Text(_times.first.format()),
+                onTap: () async {
+                  final first = _times.first;
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime:
+                        TimeOfDay(hour: first.hour, minute: first.minute),
+                  );
+                  if (picked != null) {
+                    setState(() =>
+                        _times = [ScheduleTime(picked.hour, picked.minute)]);
+                  }
+                },
+              ),
             if (_usesTimes) ...[
               const SizedBox(height: 8),
               Text(s.timesOfDay,

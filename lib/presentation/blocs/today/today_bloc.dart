@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/pet.dart';
+import '../../../domain/entities/schedule_time.dart';
 import '../../../domain/entities/treatment.dart';
 import '../../../domain/usecases/delete_dose_log.dart';
 import '../../../domain/usecases/get_all_treatments.dart';
@@ -80,11 +81,12 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         if (petTreatments.isEmpty) continue;
 
         final history = await _getDoseHistory(pet.id!);
-        // Latest log of the day per treatment, so unchecking removes it.
-        final todayLogIds = <int, int>{};
+        // All of today's logs per treatment, oldest first (logs come
+        // newest-first from the repository).
+        final todayLogIds = <int, List<int>>{};
         for (final log in history.logs.reversed) {
           if (_isSameDay(log.givenAt, today)) {
-            todayLogIds[log.treatmentId] = log.id!;
+            todayLogIds.putIfAbsent(log.treatmentId, () => []).add(log.id!);
           }
         }
 
@@ -94,7 +96,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
             for (final t in petTreatments)
               TodayItem(
                 treatment: t,
-                todayLogId: todayLogIds[t.id],
+                todayLogIds: todayLogIds[t.id] ?? const [],
               ),
           ],
         ));

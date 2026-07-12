@@ -95,12 +95,16 @@ class NotificationDataSource {
         }
       case FrequencyType.interval:
       case FrequencyType.cyclic:
-        // One-shot next occurrences; rescheduled when a dose is logged
-        // or when the app starts.
         if (treatment.frequencyType == FrequencyType.interval &&
             treatment.intervalUnit == IntervalUnit.hours) {
-          await oneShot(_nextHourlyOccurrence(treatment));
+          // Hourly intervals repeat every day at the generated intake
+          // hours (anchored on the first intake time).
+          for (final time in treatment.intakeTimesPerDay) {
+            await repeating(_nextInstanceOf(time), DateTimeComponents.time);
+          }
         } else {
+          // One-shot next occurrences; rescheduled when a dose is
+          // logged or when the app starts.
           for (final time in treatment.times) {
             await oneShot(_nextScheduledDayOccurrence(treatment, time));
           }
@@ -165,18 +169,6 @@ class NotificationDataSource {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return scheduled;
-  }
-
-  /// Next `startDate + k * intervalValue` hours strictly after now.
-  tz.TZDateTime? _nextHourlyOccurrence(Treatment treatment) {
-    final now = tz.TZDateTime.now(tz.local);
-    var candidate = tz.TZDateTime(tz.local, treatment.startDate.year,
-        treatment.startDate.month, treatment.startDate.day);
-    final step = Duration(hours: treatment.intervalValue);
-    while (!candidate.isAfter(now)) {
-      candidate = candidate.add(step);
-    }
-    return _withinEndDate(treatment, candidate) ? candidate : null;
   }
 
   /// Next day matching the treatment's pattern (interval days/months or
