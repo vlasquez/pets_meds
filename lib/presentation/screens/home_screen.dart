@@ -110,7 +110,9 @@ class _TodayTreatmentTile extends StatelessWidget {
         ),
         title: Text(
             '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
-        subtitle: Text(times),
+        subtitle: Text(
+            '$times\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
+        isThreeLine: true,
         trailing: item.givenToday
             ? IconButton(
                 icon: Icon(Icons.check_circle,
