@@ -8,6 +8,7 @@ import '../../domain/entities/treatment.dart';
 import '../../domain/usecases/get_medications.dart';
 import '../../injection.dart';
 import '../../l10n/strings.dart';
+import '../widgets/pet_avatar.dart';
 import 'frequency_screen.dart';
 import 'medication_form_screen.dart';
 
@@ -44,7 +45,9 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   late final TextEditingController _amountCtrl;
   late final TextEditingController _notesCtrl;
 
-  int? _petId;
+  /// Selected pets. Creating supports several (one treatment per pet);
+  /// editing is single-select (a treatment belongs to one pet).
+  final Set<int> _selectedPetIds = {};
   int? _medicationId;
   List<Medication> _medications = [];
   bool _loadingMedications = true;
@@ -60,7 +63,8 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   void initState() {
     super.initState();
     final t = widget.treatment;
-    _petId = t?.petId ?? widget.initialPet?.id;
+    final initialPetId = t?.petId ?? widget.initialPet?.id;
+    if (initialPetId != null) _selectedPetIds.add(initialPetId);
     _medicationId = t?.medicationId;
     _amountCtrl = TextEditingController(
         text: t == null
@@ -186,12 +190,22 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
       return;
     }
 
-    final pet = widget.pets.firstWhere((p) => p.id == _petId);
+    final selectedPets =
+        widget.pets.where((p) => _selectedPetIds.contains(p.id)).toList();
+    if (selectedPets.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(s.selectAtLeastOnePet)));
+      return;
+    }
     Medication? medication;
     for (final m in _medications) {
       if (m.id == _medicationId) medication = m;
     }
-    if (medication == null) return;
+    if (medication == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(s.selectMedication)));
+      return;
+    }
 
     // Times only where the schedule uses them; day/month intervals take
     // a single time of day; hourly intervals keep the first intake time
@@ -205,28 +219,32 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
       times = _times;
     }
 
-    final treatment = Treatment(
-      id: widget.treatment?.id,
-      petId: pet.id!,
-      medicationId: medication.id!,
-      medicationName: medication.name,
-      doseAmount:
-          double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 1,
-      doseUnit: _doseUnit,
-      frequencyType: _frequency.type,
-      times: times,
-      intervalValue: _frequency.intervalValue,
-      intervalUnit: _frequency.intervalUnit,
-      weekdays: _frequency.weekdays,
-      cycleDaysOn: _frequency.cycleDaysOn,
-      cycleDaysOff: _frequency.cycleDaysOff,
-      startDate: _startDate,
-      endDate: _endDate,
-      active: _active,
-      notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-    );
-
-    widget.onSave(treatment, pet);
+    // One treatment per selected pet. Editing is single-select, so the
+    // existing treatment keeps its id (even if reassigned to another pet).
+    for (final pet in selectedPets) {
+      final treatment = Treatment(
+        id: widget.treatment?.id,
+        petId: pet.id!,
+        medicationId: medication.id!,
+        medicationName: medication.name,
+        doseAmount:
+            double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 1,
+        doseUnit: _doseUnit,
+        frequencyType: _frequency.type,
+        times: times,
+        intervalValue: _frequency.intervalValue,
+        intervalUnit: _frequency.intervalUnit,
+        weekdays: _frequency.weekdays,
+        cycleDaysOn: _frequency.cycleDaysOn,
+        cycleDaysOff: _frequency.cycleDaysOff,
+        startDate: _startDate,
+        endDate: _endDate,
+        active: _active,
+        notes:
+            _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      );
+      widget.onSave(treatment, pet);
+    }
     Navigator.of(context).pop();
   }
 
@@ -243,16 +261,35 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Which pet this treatment is for.
-            DropdownButtonFormField<int>(
-              value: _petId,
-              decoration: InputDecoration(labelText: s.petLabel),
-              items: [
+            // Which pet(s) this treatment is for. Creating allows
+            // several (one treatment per pet); editing is single-select.
+            Text(s.petLabel, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
                 for (final p in widget.pets)
-                  DropdownMenuItem(value: p.id, child: Text(p.name)),
+                  FilterChip(
+                    avatar: _selectedPetIds.contains(p.id)
+                        ? null
+                        : PetAvatar(pet: p, radius: 12),
+                    label: Text(p.name),
+                    selected: _selectedPetIds.contains(p.id),
+                    onSelected: (sel) => setState(() {
+                      if (widget.treatment != null) {
+                        // Editing: a treatment belongs to one pet.
+                        _selectedPetIds
+                          ..clear()
+                          ..add(p.id!);
+                      } else if (sel) {
+                        _selectedPetIds.add(p.id!);
+                      } else {
+                        _selectedPetIds.remove(p.id);
+                      }
+                    }),
+                  ),
               ],
-              validator: (v) => v == null ? s.requiredField : null,
-              onChanged: (v) => setState(() => _petId = v),
             ),
             const SizedBox(height: 16),
             // Which catalog medication, with a shortcut to create one.

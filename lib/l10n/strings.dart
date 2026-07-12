@@ -256,6 +256,8 @@ class S {
   String get daysOffLabel => _es ? 'Días de descanso' : 'Rest days (off)';
   String get selectAtLeastOneDay =>
       _es ? 'Selecciona al menos un día' : 'Select at least one day';
+  String get selectAtLeastOnePet =>
+      _es ? 'Selecciona al menos una mascota' : 'Select at least one pet';
 
   /// "Select interval in hours/days/months"
   String selectIntervalIn(IntervalUnit unit) {
