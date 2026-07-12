@@ -131,12 +131,12 @@ class _PetDetailView extends StatelessWidget {
     // Watch the pets list so edits (name, birth date, breed, photo…) made on
     // the form screen are reflected here immediately; the constructor's pet
     // would otherwise be stale until this screen is reopened.
-    final currentPet = context.select<PetsBloc, Pet>(
-      (bloc) => bloc.state.pets.firstWhere(
-        (p) => p.id == pet.id,
-        orElse: () => pet,
-      ),
-    );
+    final currentPet = context.select<PetsBloc, Pet>((bloc) {
+      for (final p in bloc.state.pets) {
+        if (p.id == pet.id) return p;
+      }
+      return pet;
+    });
     return Scaffold(
       appBar: AppBar(
         title: Text(currentPet.name),
