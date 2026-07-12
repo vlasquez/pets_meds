@@ -23,7 +23,9 @@ class LogDose {
       givenAt: DateTime.now(),
       note: note,
     ));
-    if (treatment.frequencyType == FrequencyType.intervalDays) {
+    // Interval and cyclic reminders are one-shot; roll them forward.
+    if (treatment.frequencyType == FrequencyType.interval ||
+        treatment.frequencyType == FrequencyType.cyclic) {
       await _scheduler.schedule(treatment,
           title: notificationTitle, body: notificationBody);
     }

@@ -8,6 +8,7 @@ import '../../domain/entities/treatment.dart';
 import '../../domain/usecases/get_medications.dart';
 import '../../injection.dart';
 import '../../l10n/strings.dart';
+import 'frequency_screen.dart';
 import 'medication_form_screen.dart';
 
 /// Form to create/edit a treatment: pick the pet it belongs to, pick a
@@ -42,7 +43,6 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _amountCtrl;
   late final TextEditingController _notesCtrl;
-  late final TextEditingController _intervalCtrl;
 
   int? _petId;
   int? _medicationId;
@@ -50,7 +50,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   bool _loadingMedications = true;
 
   DoseUnit _doseUnit = DoseUnit.pill;
-  FrequencyType _frequencyType = FrequencyType.daily;
+  FrequencyConfig _frequency = const FrequencyConfig(type: FrequencyType.daily);
   List<ScheduleTime> _times = [const ScheduleTime(8, 0)];
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
@@ -70,16 +70,62 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                 : t.doseAmount.toString()));
     _doseUnit = t?.doseUnit ?? DoseUnit.pill;
     _notesCtrl = TextEditingController(text: t?.notes ?? '');
-    _intervalCtrl =
-        TextEditingController(text: (t?.intervalDays ?? 2).toString());
     if (t != null) {
-      _frequencyType = t.frequencyType;
+      _frequency = FrequencyConfig(
+        type: t.frequencyType,
+        intervalValue: t.intervalValue,
+        intervalUnit: t.intervalUnit,
+        weekdays: t.weekdays,
+        cycleDaysOn: t.cycleDaysOn,
+        cycleDaysOff: t.cycleDaysOff,
+      );
       _times = List.of(t.times);
+      if (_times.isEmpty) _times = [const ScheduleTime(8, 0)];
       _startDate = t.startDate;
       _endDate = t.endDate;
       _active = t.active;
     }
     _loadMedications();
+  }
+
+  /// Whether the schedule uses times of day at all.
+  bool get _usesTimes =>
+      _frequency.type != FrequencyType.onDemand &&
+      !(_frequency.type == FrequencyType.interval &&
+          _frequency.intervalUnit == IntervalUnit.hours);
+
+  /// Whether multiple times per day make sense (daily/weekdays/cyclic).
+  bool get _multipleTimes =>
+      _frequency.type == FrequencyType.daily ||
+      _frequency.type == FrequencyType.weekdays ||
+      _frequency.type == FrequencyType.cyclic;
+
+  String _frequencySummary(S s) {
+    final t = Treatment(
+      petId: 0,
+      medicationId: 0,
+      doseAmount: 1,
+      doseUnit: _doseUnit,
+      frequencyType: _frequency.type,
+      times: const [],
+      intervalValue: _frequency.intervalValue,
+      intervalUnit: _frequency.intervalUnit,
+      weekdays: _frequency.weekdays,
+      cycleDaysOn: _frequency.cycleDaysOn,
+      cycleDaysOff: _frequency.cycleDaysOff,
+      startDate: _startDate,
+    );
+    return s.frequencyLabel(t);
+  }
+
+  Future<void> _openFrequencyScreen() async {
+    final result = await Navigator.of(context).push<FrequencyConfig>(
+      MaterialPageRoute(
+          builder: (_) => FrequencyScreen(initial: _frequency)),
+    );
+    if (result != null && mounted) {
+      setState(() => _frequency = result);
+    }
   }
 
   Future<void> _loadMedications() async {
@@ -95,7 +141,6 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   void dispose() {
     _amountCtrl.dispose();
     _notesCtrl.dispose();
-    _intervalCtrl.dispose();
     super.dispose();
   }
 
@@ -133,7 +178,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   void _save() {
     final s = S.of(context);
     if (!_formKey.currentState!.validate()) return;
-    if (_times.isEmpty) {
+    if (_usesTimes && _times.isEmpty) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(s.atLeastOneTime)));
       return;
@@ -146,10 +191,16 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
     }
     if (medication == null) return;
 
-    // Interval mode uses a single time of day.
-    final times = _frequencyType == FrequencyType.intervalDays
-        ? [_times.first]
-        : _times;
+    // Times only where the schedule uses them; day/month intervals
+    // take a single time of day.
+    final List<ScheduleTime> times;
+    if (!_usesTimes) {
+      times = const [];
+    } else if (_multipleTimes) {
+      times = _times;
+    } else {
+      times = [_times.first];
+    }
 
     final treatment = Treatment(
       id: widget.treatment?.id,
@@ -159,9 +210,13 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
       doseAmount:
           double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 1,
       doseUnit: _doseUnit,
-      frequencyType: _frequencyType,
+      frequencyType: _frequency.type,
       times: times,
-      intervalDays: int.tryParse(_intervalCtrl.text) ?? 1,
+      intervalValue: _frequency.intervalValue,
+      intervalUnit: _frequency.intervalUnit,
+      weekdays: _frequency.weekdays,
+      cycleDaysOn: _frequency.cycleDaysOn,
+      cycleDaysOff: _frequency.cycleDaysOff,
       startDate: _startDate,
       endDate: _endDate,
       active: _active,
@@ -272,56 +327,39 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<FrequencyType>(
-              value: _frequencyType,
-              decoration: InputDecoration(labelText: s.frequency),
-              items: [
-                DropdownMenuItem(
-                    value: FrequencyType.daily, child: Text(s.everyDay)),
-                DropdownMenuItem(
-                    value: FrequencyType.intervalDays,
-                    child: Text(s.everyXDays(
-                        int.tryParse(_intervalCtrl.text) ?? 2))),
-              ],
-              onChanged: (v) =>
-                  setState(() => _frequencyType = v ?? FrequencyType.daily),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.repeat),
+              title: Text(s.frequency),
+              subtitle: Text(_frequencySummary(s)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _openFrequencyScreen,
             ),
-            if (_frequencyType == FrequencyType.intervalDays) ...[
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _intervalCtrl,
-                decoration: InputDecoration(labelText: s.intervalDaysLabel),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  final n = int.tryParse(v ?? '');
-                  return (n == null || n < 1) ? s.requiredField : null;
-                },
-                onChanged: (_) => setState(() {}),
+            if (_usesTimes) ...[
+              const SizedBox(height: 8),
+              Text(s.timesOfDay,
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var i = 0; i < _times.length; i++)
+                    InputChip(
+                      label: Text(_times[i].format()),
+                      onDeleted: _times.length > 1
+                          ? () => setState(() => _times.removeAt(i))
+                          : null,
+                    ),
+                  if (_multipleTimes)
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 18),
+                      label: Text(s.addTime),
+                      onPressed: _addTime,
+                    ),
+                ],
               ),
             ],
-            const SizedBox(height: 16),
-            Text(s.timesOfDay,
-                style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (var i = 0; i < _times.length; i++)
-                  InputChip(
-                    label: Text(_times[i].format()),
-                    onDeleted: _times.length > 1
-                        ? () => setState(() => _times.removeAt(i))
-                        : null,
-                  ),
-                if (_frequencyType == FrequencyType.daily)
-                  ActionChip(
-                    avatar: const Icon(Icons.add, size: 18),
-                    label: Text(s.addTime),
-                    onPressed: _addTime,
-                  ),
-              ],
-            ),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,

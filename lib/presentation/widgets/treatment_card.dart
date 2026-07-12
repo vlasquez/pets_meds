@@ -18,14 +18,6 @@ class TreatmentCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  String _scheduleLabel(S s) {
-    final times = treatment.times.map((t) => t.format()).join(', ');
-    final freq = treatment.frequencyType == FrequencyType.daily
-        ? s.everyDay
-        : s.everyXDays(treatment.intervalDays);
-    return '$freq · $times';
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -41,7 +33,7 @@ class TreatmentCard extends StatelessWidget {
         title: Text(
             '${treatment.medicationName} · ${s.formatDose(treatment.doseAmount, treatment.doseUnit)}'),
         subtitle: Text(
-            '${_scheduleLabel(s)}\n${s.remainingDaysLabel(treatment.remainingDays(DateTime.now()))}'),
+            '${s.scheduleLabel(treatment)}\n${s.remainingDaysLabel(treatment.remainingDays(DateTime.now()))}'),
         isThreeLine: true,
         trailing: PopupMenuButton<String>(
           onSelected: (value) {

@@ -18,7 +18,7 @@ class DatabaseProvider {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pet_meds.db'),
-      version: 7,
+      version: 8,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pets(
@@ -62,6 +62,23 @@ class DatabaseProvider {
         if (oldVersion < 7) {
           await _migrateToCatalogAndTreatments(db);
         }
+        if (oldVersion == 7) {
+          // v8: richer frequency model. (<7 already got the new columns
+          // via the rebuilt treatments table above.)
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN intervalValue INTEGER NOT NULL DEFAULT 8");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN intervalUnit TEXT NOT NULL DEFAULT 'hours'");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN weekdays TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN cycleDaysOn INTEGER NOT NULL DEFAULT 21");
+          await db.execute(
+              "ALTER TABLE treatments ADD COLUMN cycleDaysOff INTEGER NOT NULL DEFAULT 7");
+          await db.execute(
+              "UPDATE treatments SET intervalValue = intervalDays, intervalUnit = 'days', "
+              "frequencyType = 'interval' WHERE frequencyType = 'intervalDays'");
+        }
       },
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -89,7 +106,11 @@ class DatabaseProvider {
         doseUnit TEXT NOT NULL DEFAULT 'unit',
         frequencyType TEXT NOT NULL,
         times TEXT NOT NULL,
-        intervalDays INTEGER NOT NULL DEFAULT 1,
+        intervalValue INTEGER NOT NULL DEFAULT 8,
+        intervalUnit TEXT NOT NULL DEFAULT 'hours',
+        weekdays TEXT NOT NULL DEFAULT '',
+        cycleDaysOn INTEGER NOT NULL DEFAULT 21,
+        cycleDaysOff INTEGER NOT NULL DEFAULT 7,
         startDate TEXT NOT NULL,
         endDate TEXT,
         active INTEGER NOT NULL DEFAULT 1,
@@ -139,15 +160,23 @@ class DatabaseProvider {
     await db.execute(
         'INSERT INTO medications(name) SELECT DISTINCT name FROM old_treatments');
 
-    // 4. Treatments: old rows keep their ids, linked to the catalog by name.
+    // 4. Treatments: old rows keep their ids, linked to the catalog by
+    //    name. Legacy 'intervalDays' frequency maps to the richer
+    //    interval model (value + unit).
     await _createTreatmentsTable(db);
     await db.execute('''
       INSERT INTO treatments (id, petId, medicationId, doseAmount, doseUnit,
-                              frequencyType, times, intervalDays, startDate,
-                              endDate, active, notes)
+                              frequencyType, times, intervalValue,
+                              intervalUnit, startDate, endDate, active, notes)
       SELECT t.id, t.petId, m.id, t.doseAmount, t.doseUnit,
-             t.frequencyType, t.times, t.intervalDays, t.startDate,
-             t.endDate, t.active, t.notes
+             CASE t.frequencyType WHEN 'intervalDays' THEN 'interval'
+                                  ELSE t.frequencyType END,
+             t.times,
+             CASE t.frequencyType WHEN 'intervalDays' THEN t.intervalDays
+                                  ELSE 8 END,
+             CASE t.frequencyType WHEN 'intervalDays' THEN 'days'
+                                  ELSE 'hours' END,
+             t.startDate, t.endDate, t.active, t.notes
       FROM old_treatments t
       JOIN medications m ON m.name = t.name
     ''');

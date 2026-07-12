@@ -54,14 +54,6 @@ class TreatmentsScreen extends StatelessWidget {
     if (confirmed) bloc.add(TreatmentDeleted(entry.treatment));
   }
 
-  String _scheduleLabel(S s, Treatment t) {
-    final times = t.times.map((x) => x.format()).join(', ');
-    final freq = t.frequencyType == FrequencyType.daily
-        ? s.everyDay
-        : s.everyXDays(t.intervalDays);
-    return '$freq · $times';
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -91,7 +83,7 @@ class TreatmentsScreen extends StatelessWidget {
                         title: Text(
                             '${e.treatment.medicationName} · ${s.formatDose(e.treatment.doseAmount, e.treatment.doseUnit)}'),
                         subtitle: Text(
-                            '${e.pet.name} · ${_scheduleLabel(s, e.treatment)}\n'
+                            '${e.pet.name} · ${s.scheduleLabel(e.treatment)}\n'
                             '${s.remainingDaysLabel(e.treatment.remainingDays(DateTime.now()))}'),
                         isThreeLine: true,
                         trailing: PopupMenuButton<String>(

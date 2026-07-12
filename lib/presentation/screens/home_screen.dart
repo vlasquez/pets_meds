@@ -98,7 +98,6 @@ class _TodayTreatmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final t = item.treatment;
-    final times = t.times.map((x) => x.format()).join(', ');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
@@ -111,7 +110,7 @@ class _TodayTreatmentTile extends StatelessWidget {
         title: Text(
             '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
         subtitle: Text(
-            '$times\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
+            '${s.scheduleLabel(t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
         isThreeLine: true,
         trailing: item.givenToday
             ? IconButton(

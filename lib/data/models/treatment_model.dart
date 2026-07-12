@@ -14,7 +14,11 @@ class TreatmentModel extends Treatment {
     required super.doseUnit,
     required super.frequencyType,
     required super.times,
-    super.intervalDays,
+    super.intervalValue,
+    super.intervalUnit,
+    super.weekdays,
+    super.cycleDaysOn,
+    super.cycleDaysOff,
     required super.startDate,
     super.endDate,
     super.active,
@@ -30,19 +34,32 @@ class TreatmentModel extends Treatment {
         doseUnit: t.doseUnit,
         frequencyType: t.frequencyType,
         times: t.times,
-        intervalDays: t.intervalDays,
+        intervalValue: t.intervalValue,
+        intervalUnit: t.intervalUnit,
+        weekdays: t.weekdays,
+        cycleDaysOn: t.cycleDaysOn,
+        cycleDaysOff: t.cycleDaysOff,
         startDate: t.startDate,
         endDate: t.endDate,
         active: t.active,
         notes: t.notes,
       );
 
-  static DoseUnit _unitFromName(String? name) {
+  static DoseUnit _doseUnitFromName(String? name) {
     if (name == null) return DoseUnit.unit;
     try {
       return DoseUnit.values.byName(name);
     } on ArgumentError {
       return DoseUnit.unit;
+    }
+  }
+
+  static IntervalUnit _intervalUnitFromName(String? name) {
+    if (name == null) return IntervalUnit.hours;
+    try {
+      return IntervalUnit.values.byName(name);
+    } on ArgumentError {
+      return IntervalUnit.hours;
     }
   }
 
@@ -57,17 +74,28 @@ class TreatmentModel extends Treatment {
     }).toList();
   }
 
+  static String encodeWeekdays(List<int> weekdays) => weekdays.join(',');
+
+  static List<int> decodeWeekdays(String? value) {
+    if (value == null || value.trim().isEmpty) return [];
+    return value.split(',').map(int.parse).toList();
+  }
+
   factory TreatmentModel.fromMap(Map<String, dynamic> map) => TreatmentModel(
         id: map['id'] as int?,
         petId: map['petId'] as int,
         medicationId: map['medicationId'] as int,
         medicationName: map['medicationName'] as String? ?? '',
         doseAmount: (map['doseAmount'] as num? ?? 1).toDouble(),
-        doseUnit: _unitFromName(map['doseUnit'] as String?),
+        doseUnit: _doseUnitFromName(map['doseUnit'] as String?),
         frequencyType:
             FrequencyType.values.byName(map['frequencyType'] as String),
         times: decodeTimes(map['times'] as String),
-        intervalDays: map['intervalDays'] as int? ?? 1,
+        intervalValue: map['intervalValue'] as int? ?? 8,
+        intervalUnit: _intervalUnitFromName(map['intervalUnit'] as String?),
+        weekdays: decodeWeekdays(map['weekdays'] as String?),
+        cycleDaysOn: map['cycleDaysOn'] as int? ?? 21,
+        cycleDaysOff: map['cycleDaysOff'] as int? ?? 7,
         startDate: DateTime.parse(map['startDate'] as String),
         endDate: map['endDate'] == null
             ? null
@@ -85,7 +113,11 @@ class TreatmentModel extends Treatment {
         'doseUnit': doseUnit.name,
         'frequencyType': frequencyType.name,
         'times': encodeTimes(times),
-        'intervalDays': intervalDays,
+        'intervalValue': intervalValue,
+        'intervalUnit': intervalUnit.name,
+        'weekdays': encodeWeekdays(weekdays),
+        'cycleDaysOn': cycleDaysOn,
+        'cycleDaysOff': cycleDaysOff,
         'startDate': startDate.toIso8601String(),
         'endDate': endDate?.toIso8601String(),
         'active': active ? 1 : 0,

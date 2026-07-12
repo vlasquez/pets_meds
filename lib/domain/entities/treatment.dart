@@ -3,7 +3,26 @@ import 'package:equatable/equatable.dart';
 import 'dose_unit.dart';
 import 'schedule_time.dart';
 
-enum FrequencyType { daily, intervalDays }
+enum FrequencyType {
+  /// Every day at [Treatment.times].
+  daily,
+
+  /// Every [Treatment.intervalValue] [Treatment.intervalUnit]
+  /// (hours, days or months).
+  interval,
+
+  /// On specific days of the week ([Treatment.weekdays], 1=Mon … 7=Sun).
+  weekdays,
+
+  /// Cyclic: [Treatment.cycleDaysOn] days of treatment followed by
+  /// [Treatment.cycleDaysOff] days of rest, repeating from [startDate].
+  cyclic,
+
+  /// No schedule — given when needed. No reminders.
+  onDemand,
+}
+
+enum IntervalUnit { hours, days, months }
 
 /// Domain entity: a treatment — a [Medication] from the catalog assigned
 /// to one pet, with its dosing schedule. A medication can back many
@@ -22,12 +41,20 @@ class Treatment extends Equatable {
   final DoseUnit doseUnit;
   final FrequencyType frequencyType;
 
-  /// For [FrequencyType.daily]: one or more times of day.
-  /// For [FrequencyType.intervalDays]: a single time of day.
+  /// Times of day. Not used for [FrequencyType.onDemand] or hour-based
+  /// intervals; a single time for day/month intervals.
   final List<ScheduleTime> times;
 
-  /// Only used when [frequencyType] == intervalDays (e.g. every 3 days).
-  final int intervalDays;
+  /// Only used when [frequencyType] == interval (e.g. every 8 hours).
+  final int intervalValue;
+  final IntervalUnit intervalUnit;
+
+  /// Only used when [frequencyType] == weekdays (1=Mon … 7=Sun).
+  final List<int> weekdays;
+
+  /// Only used when [frequencyType] == cyclic.
+  final int cycleDaysOn;
+  final int cycleDaysOff;
 
   final DateTime startDate;
   final DateTime? endDate;
@@ -43,7 +70,11 @@ class Treatment extends Equatable {
     required this.doseUnit,
     required this.frequencyType,
     required this.times,
-    this.intervalDays = 1,
+    this.intervalValue = 8,
+    this.intervalUnit = IntervalUnit.hours,
+    this.weekdays = const [],
+    this.cycleDaysOn = 21,
+    this.cycleDaysOff = 7,
     required this.startDate,
     this.endDate,
     this.active = true,
@@ -59,7 +90,11 @@ class Treatment extends Equatable {
     DoseUnit? doseUnit,
     FrequencyType? frequencyType,
     List<ScheduleTime>? times,
-    int? intervalDays,
+    int? intervalValue,
+    IntervalUnit? intervalUnit,
+    List<int>? weekdays,
+    int? cycleDaysOn,
+    int? cycleDaysOff,
     DateTime? startDate,
     DateTime? endDate,
     bool? active,
@@ -74,7 +109,11 @@ class Treatment extends Equatable {
         doseUnit: doseUnit ?? this.doseUnit,
         frequencyType: frequencyType ?? this.frequencyType,
         times: times ?? this.times,
-        intervalDays: intervalDays ?? this.intervalDays,
+        intervalValue: intervalValue ?? this.intervalValue,
+        intervalUnit: intervalUnit ?? this.intervalUnit,
+        weekdays: weekdays ?? this.weekdays,
+        cycleDaysOn: cycleDaysOn ?? this.cycleDaysOn,
+        cycleDaysOff: cycleDaysOff ?? this.cycleDaysOff,
         startDate: startDate ?? this.startDate,
         endDate: endDate ?? this.endDate,
         active: active ?? this.active,
@@ -90,9 +129,20 @@ class Treatment extends Equatable {
     return end.difference(today).inDays;
   }
 
-  /// Whether a dose is scheduled on [day] (date only, time ignored):
-  /// the treatment is active, within its start/end range, and — for
-  /// interval-based schedules — [day] falls on a multiple of the interval.
+  /// [date] plus [months] calendar months, clamped to the target
+  /// month's last day (Jan 31 + 1 month = Feb 28/29).
+  static DateTime addMonths(DateTime date, int months) {
+    final totalMonths = date.month - 1 + months;
+    final year = date.year + totalMonths ~/ 12;
+    final month = totalMonths % 12 + 1;
+    final lastDay = DateTime(year, month + 1, 0).day;
+    final day = date.day > lastDay ? lastDay : date.day;
+    return DateTime(year, month, day);
+  }
+
+  /// Whether a dose is scheduled (or available, for on-demand) on [day]
+  /// (date only, time ignored): the treatment is active, within its
+  /// start/end range, and [day] matches the frequency pattern.
   bool isScheduledOn(DateTime day) {
     if (!active) return false;
     final date = DateTime(day.year, day.month, day.day);
@@ -102,9 +152,30 @@ class Treatment extends Equatable {
       final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
       if (date.isAfter(end)) return false;
     }
-    if (frequencyType == FrequencyType.daily) return true;
-    final daysSinceStart = date.difference(start).inDays;
-    return daysSinceStart % intervalDays == 0;
+    switch (frequencyType) {
+      case FrequencyType.daily:
+      case FrequencyType.onDemand:
+        return true;
+      case FrequencyType.interval:
+        switch (intervalUnit) {
+          case IntervalUnit.hours:
+            return true; // Repeats within every day.
+          case IntervalUnit.days:
+            return date.difference(start).inDays % intervalValue == 0;
+          case IntervalUnit.months:
+            var candidate = start;
+            while (candidate.isBefore(date)) {
+              candidate = addMonths(candidate, intervalValue);
+            }
+            return candidate == date;
+        }
+      case FrequencyType.weekdays:
+        return weekdays.contains(date.weekday);
+      case FrequencyType.cyclic:
+        final cycle = cycleDaysOn + cycleDaysOff;
+        if (cycle <= 0) return false;
+        return date.difference(start).inDays % cycle < cycleDaysOn;
+    }
   }
 
   @override
@@ -117,7 +188,11 @@ class Treatment extends Equatable {
         doseUnit,
         frequencyType,
         times,
-        intervalDays,
+        intervalValue,
+        intervalUnit,
+        weekdays,
+        cycleDaysOn,
+        cycleDaysOff,
         startDate,
         endDate,
         active,
