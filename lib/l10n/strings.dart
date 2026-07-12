@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../domain/entities/breed.dart';
 import '../domain/entities/dose_unit.dart';
 import '../domain/entities/vaccination.dart';
 
@@ -31,6 +32,109 @@ class S {
   String get dog => _es ? 'Perro' : 'Dog';
   String get cat => _es ? 'Gato' : 'Cat';
   String get other => _es ? 'Otro' : 'Other';
+  String get breedLabel => _es ? 'Raza' : 'Breed';
+
+  String dogBreedName(DogBreed breed) {
+    switch (breed) {
+      case DogBreed.beagle:
+        return 'Beagle';
+      case DogBreed.borderCollie:
+        return 'Border Collie';
+      case DogBreed.boxer:
+        return _es ? 'Bóxer' : 'Boxer';
+      case DogBreed.bulldog:
+        return 'Bulldog';
+      case DogBreed.chihuahua:
+        return 'Chihuahua';
+      case DogBreed.cockerSpaniel:
+        return 'Cocker Spaniel';
+      case DogBreed.dachshund:
+        return _es ? 'Salchicha (Dachshund)' : 'Dachshund';
+      case DogBreed.dobermann:
+        return _es ? 'Dóberman' : 'Dobermann';
+      case DogBreed.frenchBulldog:
+        return _es ? 'Bulldog Francés' : 'French Bulldog';
+      case DogBreed.germanShepherd:
+        return _es ? 'Pastor Alemán' : 'German Shepherd';
+      case DogBreed.goldenRetriever:
+        return 'Golden Retriever';
+      case DogBreed.greatDane:
+        return _es ? 'Gran Danés' : 'Great Dane';
+      case DogBreed.husky:
+        return _es ? 'Husky Siberiano' : 'Siberian Husky';
+      case DogBreed.labrador:
+        return _es ? 'Labrador' : 'Labrador Retriever';
+      case DogBreed.poodle:
+        return _es ? 'Poodle (Caniche)' : 'Poodle';
+      case DogBreed.pug:
+        return 'Pug';
+      case DogBreed.rottweiler:
+        return 'Rottweiler';
+      case DogBreed.schnauzer:
+        return 'Schnauzer';
+      case DogBreed.shihTzu:
+        return 'Shih Tzu';
+      case DogBreed.yorkshireTerrier:
+        return 'Yorkshire Terrier';
+      case DogBreed.mixed:
+        return _es ? 'Criollo / Mestizo' : 'Mixed breed';
+      case DogBreed.other:
+        return _es ? 'Otra' : 'Other';
+    }
+  }
+
+  String catBreedName(CatBreed breed) {
+    switch (breed) {
+      case CatBreed.abyssinian:
+        return _es ? 'Abisinio' : 'Abyssinian';
+      case CatBreed.angora:
+        return _es ? 'Angora' : 'Angora';
+      case CatBreed.bengal:
+        return _es ? 'Bengalí' : 'Bengal';
+      case CatBreed.britishShorthair:
+        return _es ? 'Británico de Pelo Corto' : 'British Shorthair';
+      case CatBreed.burmese:
+        return _es ? 'Burmés' : 'Burmese';
+      case CatBreed.domesticShorthair:
+        return _es ? 'Doméstico de Pelo Corto' : 'Domestic Shorthair';
+      case CatBreed.himalayan:
+        return _es ? 'Himalayo' : 'Himalayan';
+      case CatBreed.maineCoon:
+        return 'Maine Coon';
+      case CatBreed.persian:
+        return _es ? 'Persa' : 'Persian';
+      case CatBreed.ragdoll:
+        return 'Ragdoll';
+      case CatBreed.russianBlue:
+        return _es ? 'Azul Ruso' : 'Russian Blue';
+      case CatBreed.scottishFold:
+        return 'Scottish Fold';
+      case CatBreed.siamese:
+        return _es ? 'Siamés' : 'Siamese';
+      case CatBreed.sphynx:
+        return _es ? 'Esfinge (Sphynx)' : 'Sphynx';
+      case CatBreed.mixed:
+        return _es ? 'Criollo / Mestizo' : 'Mixed breed';
+      case CatBreed.other:
+        return _es ? 'Otra' : 'Other';
+    }
+  }
+
+  /// Localized breed name from a pet's stored [species] + [breed] enum name,
+  /// or null when unset/unknown.
+  String? breedName(String species, String? breed) {
+    switch (species) {
+      case 'dog':
+        final b = dogBreedFromName(breed);
+        return b == null ? null : dogBreedName(b);
+      case 'cat':
+        final b = catBreedFromName(breed);
+        return b == null ? null : catBreedName(b);
+      default:
+        return null;
+    }
+  }
+
   String get notes => _es ? 'Notas' : 'Notes';
   String get save => _es ? 'Guardar' : 'Save';
   String get cancel => _es ? 'Cancelar' : 'Cancel';

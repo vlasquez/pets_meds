@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/datasources/local/photo_storage.dart';
+import '../../domain/entities/breed.dart';
 import '../../domain/entities/pet.dart';
 import '../../injection.dart';
 import '../../l10n/strings.dart';
@@ -23,6 +24,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _notesCtrl;
   String _species = 'dog';
+  String? _breed; // DogBreed/CatBreed enum name, per _species.
   String? _photoPath;
   DateTime? _birthDate;
   bool _photoChanged = false;
@@ -33,6 +35,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
     _nameCtrl = TextEditingController(text: widget.pet?.name ?? '');
     _notesCtrl = TextEditingController(text: widget.pet?.notes ?? '');
     _species = widget.pet?.species ?? 'dog';
+    _breed = widget.pet?.breed;
     _photoPath = widget.pet?.photoPath;
     _birthDate = widget.pet?.birthDate;
   }
@@ -120,6 +123,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       id: widget.pet?.id,
       name: _nameCtrl.text.trim(),
       species: _species,
+      breed: _breed,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       photoPath: photoPath,
       birthDate: _birthDate,
@@ -185,8 +189,19 @@ class _PetFormScreenState extends State<PetFormScreen> {
                 DropdownMenuItem(value: 'cat', child: Text(s.cat)),
                 DropdownMenuItem(value: 'other', child: Text(s.other)),
               ],
-              onChanged: (v) => setState(() => _species = v ?? 'dog'),
+              onChanged: (v) => setState(() {
+                if (v != _species) _breed = null; // Breed depends on species.
+                _species = v ?? 'dog';
+              }),
             ),
+            if (_species == 'dog' || _species == 'cat') ...[
+              const SizedBox(height: 16),
+              _BreedDropdown(
+                species: _species,
+                breed: _breed,
+                onChanged: (v) => setState(() => _breed = v),
+              ),
+            ],
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -213,6 +228,63 @@ class _PetFormScreenState extends State<PetFormScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Breed dropdown fed by [DogBreed] or [CatBreed] depending on [species].
+/// Options are sorted alphabetically, with "mixed" and "other" last.
+class _BreedDropdown extends StatelessWidget {
+  final String species; // 'dog' | 'cat'
+  final String? breed; // Enum name.
+  final ValueChanged<String?> onChanged;
+
+  const _BreedDropdown({
+    required this.species,
+    required this.breed,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+
+    final List<(String, String)> options; // (enum name, localized label)
+    if (species == 'dog') {
+      final sorted = DogBreed.values
+          .where((b) => b != DogBreed.mixed && b != DogBreed.other)
+          .toList()
+        ..sort((a, b) =>
+            s.dogBreedName(a).toLowerCase().compareTo(s.dogBreedName(b).toLowerCase()));
+      options = [
+        for (final b in [...sorted, DogBreed.mixed, DogBreed.other])
+          (b.name, s.dogBreedName(b)),
+      ];
+    } else {
+      final sorted = CatBreed.values
+          .where((b) => b != CatBreed.mixed && b != CatBreed.other)
+          .toList()
+        ..sort((a, b) =>
+            s.catBreedName(a).toLowerCase().compareTo(s.catBreedName(b).toLowerCase()));
+      options = [
+        for (final b in [...sorted, CatBreed.mixed, CatBreed.other])
+          (b.name, s.catBreedName(b)),
+      ];
+    }
+
+    // Guard against a stale value after a species switch.
+    final value =
+        options.any((o) => o.$1 == breed) ? breed : null;
+
+    return DropdownButtonFormField<String?>(
+      value: value,
+      decoration: InputDecoration(labelText: s.breedLabel),
+      items: [
+        DropdownMenuItem<String?>(value: null, child: Text(s.notSet)),
+        for (final (name, label) in options)
+          DropdownMenuItem<String?>(value: name, child: Text(label)),
+      ],
+      onChanged: onChanged,
     );
   }
 }

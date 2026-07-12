@@ -14,13 +14,14 @@ class DatabaseProvider {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pet_meds.db'),
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pets(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             species TEXT NOT NULL,
+            breed TEXT,
             notes TEXT,
             photoPath TEXT,
             birthDate TEXT
@@ -72,6 +73,9 @@ class DatabaseProvider {
         }
         if (oldVersion < 4) {
           await _createVaccinationsTable(db);
+        }
+        if (oldVersion < 5) {
+          await db.execute('ALTER TABLE pets ADD COLUMN breed TEXT');
         }
       },
       onConfigure: (db) async {

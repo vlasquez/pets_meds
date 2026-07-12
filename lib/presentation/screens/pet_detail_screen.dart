@@ -128,9 +128,18 @@ class _PetDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    // Watch the pets list so edits (name, birth date, breed, photo…) made on
+    // the form screen are reflected here immediately; the constructor's pet
+    // would otherwise be stale until this screen is reopened.
+    final currentPet = context.select<PetsBloc, Pet>((bloc) {
+      for (final p in bloc.state.pets) {
+        if (p.id == pet.id) return p;
+      }
+      return pet;
+    });
     return Scaffold(
       appBar: AppBar(
-        title: Text(pet.name),
+        title: Text(currentPet.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
@@ -143,7 +152,8 @@ class _PetDetailView extends StatelessWidget {
             icon: const Icon(Icons.edit),
             tooltip: s.editPet,
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => PetFormScreen(pet: pet)),
+              MaterialPageRoute(
+                  builder: (_) => PetFormScreen(pet: currentPet)),
             ),
           ),
           IconButton(
@@ -164,7 +174,7 @@ class _PetDetailView extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 88),
           children: [
-            _PetHeader(pet: pet),
+            _PetHeader(pet: currentPet),
             const Divider(height: 1),
             _WeightSection(onSeeHistory: _openWeightHistory),
             const Divider(height: 1),
@@ -199,6 +209,7 @@ class _PetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final age = pet.ageAt(DateTime.now());
+    final breedName = s.breedName(pet.species, pet.breed);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -211,6 +222,9 @@ class _PetHeader extends StatelessWidget {
               children: [
                 Text(pet.name,
                     style: Theme.of(context).textTheme.titleMedium),
+                if (breedName != null)
+                  Text(breedName,
+                      style: Theme.of(context).textTheme.bodyMedium),
                 if (age != null)
                   Text(s.age(age.$1, age.$2),
                       style: Theme.of(context).textTheme.bodyMedium),

@@ -8,7 +8,10 @@ class PetRepositoryImpl implements PetRepository {
   const PetRepositoryImpl(this._local);
 
   @override
-  Future<List<Pet>> getPets() => _local.getPets();
+  Future<List<Pet>> getPets() async =>
+      // Copy into a List<Pet> so callers get true Pet typing at runtime
+      // (a raw List<PetModel> breaks e.g. firstWhere's orElse).
+      List<Pet>.of(await _local.getPets());
 
   @override
   Future<Pet> insertPet(Pet pet) async {
