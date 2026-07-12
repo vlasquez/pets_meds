@@ -14,7 +14,7 @@ class DatabaseProvider {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pet_meds.db'),
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pets(
@@ -77,6 +77,9 @@ class DatabaseProvider {
         if (oldVersion < 5) {
           await db.execute('ALTER TABLE pets ADD COLUMN breed TEXT');
         }
+        if (oldVersion < 6) {
+          await _rebuildMedicationsTable(db);
+        }
       },
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -94,6 +97,68 @@ class DatabaseProvider {
         note TEXT
       )
     ''');
+  }
+
+  /// Databases created before v3 have a legacy `dosage TEXT NOT NULL`
+  /// column that later schemas no longer write, so inserts fail with a
+  /// NOT NULL constraint. SQLite can't drop/relax a column, so rebuild
+  /// the table with the current schema. Dose logs are backed up first:
+  /// with foreign_keys ON, dropping `medications` would cascade-delete
+  /// them.
+  Future<void> _rebuildMedicationsTable(Database db) async {
+    const columns =
+        'id, petId, name, doseAmount, doseUnit, frequencyType, times, '
+        'intervalDays, startDate, endDate, active, notes';
+
+    // 1. Back up dose_logs without FKs, then drop it (child first).
+    await db.execute('''
+      CREATE TABLE dose_logs_backup(
+        id INTEGER,
+        medicationId INTEGER NOT NULL,
+        petId INTEGER NOT NULL,
+        givenAt TEXT NOT NULL,
+        note TEXT
+      )
+    ''');
+    await db.execute(
+        'INSERT INTO dose_logs_backup SELECT id, medicationId, petId, givenAt, note FROM dose_logs');
+    await db.execute('DROP TABLE dose_logs');
+
+    // 2. Rebuild medications with the current schema.
+    await db.execute('''
+      CREATE TABLE medications_new(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        doseAmount REAL NOT NULL DEFAULT 1,
+        doseUnit TEXT NOT NULL DEFAULT 'unit',
+        frequencyType TEXT NOT NULL,
+        times TEXT NOT NULL,
+        intervalDays INTEGER NOT NULL DEFAULT 1,
+        startDate TEXT NOT NULL,
+        endDate TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        notes TEXT
+      )
+    ''');
+    await db.execute(
+        'INSERT INTO medications_new ($columns) SELECT $columns FROM medications');
+    await db.execute('DROP TABLE medications');
+    await db.execute('ALTER TABLE medications_new RENAME TO medications');
+
+    // 3. Restore dose_logs with its FKs.
+    await db.execute('''
+      CREATE TABLE dose_logs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        medicationId INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
+        petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+        givenAt TEXT NOT NULL,
+        note TEXT
+      )
+    ''');
+    await db.execute(
+        'INSERT INTO dose_logs SELECT id, medicationId, petId, givenAt, note FROM dose_logs_backup');
+    await db.execute('DROP TABLE dose_logs_backup');
   }
 
   Future<void> _createVaccinationsTable(Database db) async {

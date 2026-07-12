@@ -59,6 +59,7 @@ class PetsScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'pets_fab', // Unique: multiple FABs live in the IndexedStack.
         tooltip: s.addPet,
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const PetFormScreen()),
