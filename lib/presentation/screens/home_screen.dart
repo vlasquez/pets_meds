@@ -78,31 +78,53 @@ class _PetHeader extends StatelessWidget {
   }
 }
 
-class _TodayTreatmentTile extends StatelessWidget {
+class _TodayTreatmentTile extends StatefulWidget {
   final TodayEntry entry;
   final TodayItem item;
   const _TodayTreatmentTile({required this.entry, required this.item});
 
+  @override
+  State<_TodayTreatmentTile> createState() => _TodayTreatmentTileState();
+}
+
+class _TodayTreatmentTileState extends State<_TodayTreatmentTile> {
+  /// Completed treatments start collapsed (intakes hidden);
+  /// pending ones start expanded.
+  late bool _expanded = !widget.item.completed;
+
+  @override
+  void didUpdateWidget(_TodayTreatmentTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-collapse when the last intake is checked; re-expand when
+    // an intake is unchecked.
+    if (oldWidget.item.completed != widget.item.completed) {
+      _expanded = !widget.item.completed;
+    }
+  }
+
   void _markGiven(BuildContext context) {
     final s = S.of(context);
-    final t = item.treatment;
+    final t = widget.item.treatment;
     context.read<TodayBloc>().add(TodayDoseGiven(
           treatment: t,
-          notificationTitle: s.reminderTitle(entry.pet.name),
+          notificationTitle: s.reminderTitle(widget.entry.pet.name),
           notificationBody: s.reminderBody(
               t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
         ));
   }
 
   void _unmarkLatest(BuildContext context) {
-    if (item.todayLogIds.isEmpty) return;
-    context.read<TodayBloc>().add(TodayDoseUnmarked(item.todayLogIds.last));
+    if (widget.item.todayLogIds.isEmpty) return;
+    context
+        .read<TodayBloc>()
+        .add(TodayDoseUnmarked(widget.item.todayLogIds.last));
   }
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
     final theme = Theme.of(context);
+    final item = widget.item;
     final t = item.treatment;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -121,54 +143,72 @@ class _TodayTreatmentTile extends StatelessWidget {
             subtitle: Text(
                 '${s.scheduleLabel(t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
             isThreeLine: true,
-            trailing: item.completed
-                ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-                : null,
-            onTap: () => _openPetDetail(context, entry),
-          ),
-          // Daily progress: one check per intake + progress bar.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: item.progress,
-                          minHeight: 8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${item.givenCount}/${item.targetCount}',
-                      style: theme.textTheme.labelLarge,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    for (var i = 0; i < item.targetCount; i++)
-                      _IntakeChip(
-                        label: i < item.intakeTimes.length
-                            ? item.intakeTimes[i].format()
-                            : '#${i + 1}',
-                        taken: i < item.givenCount,
-                        onTap: i < item.givenCount
-                            ? () => _unmarkLatest(context)
-                            : () => _markGiven(context),
-                      ),
-                  ],
+                if (item.completed)
+                  Icon(Icons.check_circle,
+                      color: theme.colorScheme.primary),
+                IconButton(
+                  icon: Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more),
+                  onPressed: () => setState(() => _expanded = !_expanded),
                 ),
               ],
             ),
+            onTap: () => _openPetDetail(context, widget.entry),
+          ),
+          // Daily progress: one check per intake + progress bar.
+          // Hidden when collapsed (e.g. after completing the day).
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: !_expanded
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: item.progress,
+                                  minHeight: 8,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${item.givenCount}/${item.targetCount}',
+                              style: theme.textTheme.labelLarge,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            for (var i = 0; i < item.targetCount; i++)
+                              _IntakeChip(
+                                label: i < item.intakeTimes.length
+                                    ? item.intakeTimes[i].format()
+                                    : '#${i + 1}',
+                                taken: i < item.givenCount,
+                                onTap: i < item.givenCount
+                                    ? () => _unmarkLatest(context)
+                                    : () => _markGiven(context),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
