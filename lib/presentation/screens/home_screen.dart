@@ -94,39 +94,83 @@ class _TodayTreatmentTile extends StatelessWidget {
         ));
   }
 
+  void _unmarkLatest(BuildContext context) {
+    if (item.todayLogIds.isEmpty) return;
+    context.read<TodayBloc>().add(TodayDoseUnmarked(item.todayLogIds.last));
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final theme = Theme.of(context);
     final t = item.treatment;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: item.givenToday
-              ? Theme.of(context).colorScheme.surfaceContainerHighest
-              : Theme.of(context).colorScheme.primaryContainer,
-          child: const Icon(Icons.medication),
-        ),
-        title: Text(
-            '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
-        subtitle: Text(
-            '${s.scheduleLabel(t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
-        isThreeLine: true,
-        trailing: item.givenToday
-            ? IconButton(
-                icon: Icon(Icons.check_circle,
-                    color: Theme.of(context).colorScheme.primary),
-                tooltip: s.unmarkGiven,
-                onPressed: () => context
-                    .read<TodayBloc>()
-                    .add(TodayDoseUnmarked(item.todayLogId!)),
-              )
-            : IconButton(
-                icon: const Icon(Icons.check_circle_outline),
-                tooltip: s.markGiven,
-                onPressed: () => _markGiven(context),
-              ),
-        onTap: () => _openPetDetail(context, entry),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: item.completed
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : theme.colorScheme.primaryContainer,
+              child: const Icon(Icons.medication),
+            ),
+            title: Text(
+                '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
+            subtitle: Text(
+                '${s.scheduleLabel(t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
+            isThreeLine: true,
+            trailing: item.completed
+                ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                : null,
+            onTap: () => _openPetDetail(context, entry),
+          ),
+          // Daily progress: one check per intake + progress bar.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: item.progress,
+                          minHeight: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${item.givenCount}/${item.targetCount}',
+                      style: theme.textTheme.labelLarge,
+                    ),
+                  ],
+                ),
+                Wrap(
+                  children: [
+                    for (var i = 0; i < item.targetCount; i++)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: i < item.givenCount
+                            ? Icon(Icons.check_circle,
+                                color: theme.colorScheme.primary)
+                            : const Icon(Icons.check_circle_outline),
+                        tooltip:
+                            i < item.givenCount ? s.unmarkGiven : s.markGiven,
+                        onPressed: i < item.givenCount
+                            ? () => _unmarkLatest(context)
+                            : () => _markGiven(context),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

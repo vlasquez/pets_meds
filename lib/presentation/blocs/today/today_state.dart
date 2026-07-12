@@ -2,20 +2,30 @@ part of 'today_bloc.dart';
 
 enum TodayStatus { initial, loading, success, failure }
 
-/// A treatment scheduled today plus today's dose log (if already given).
+/// A treatment scheduled today plus today's dose logs.
 final class TodayItem extends Equatable {
   final Treatment treatment;
 
-  /// Id of today's latest dose log for this treatment, or null when
-  /// no dose was logged today. Used to uncheck (delete the log).
-  final int? todayLogId;
+  /// Ids of today's dose logs for this treatment, oldest first.
+  /// Each log is one intake; unchecking deletes the latest one.
+  final List<int> todayLogIds;
 
-  const TodayItem({required this.treatment, this.todayLogId});
+  const TodayItem({required this.treatment, this.todayLogIds = const []});
 
-  bool get givenToday => todayLogId != null;
+  /// Intakes taken today.
+  int get givenCount => todayLogIds.length;
+
+  /// Intakes expected today.
+  int get targetCount => treatment.dosesPerDay;
+
+  /// The treatment is complete for the day when every intake was taken.
+  bool get completed => givenCount >= targetCount;
+
+  double get progress =>
+      targetCount == 0 ? 0 : (givenCount / targetCount).clamp(0.0, 1.0);
 
   @override
-  List<Object?> get props => [treatment, todayLogId];
+  List<Object?> get props => [treatment, todayLogIds];
 }
 
 /// A pet with its treatments scheduled for today.

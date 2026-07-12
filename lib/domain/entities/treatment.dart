@@ -140,6 +140,27 @@ class Treatment extends Equatable {
     return DateTime(year, month, day);
   }
 
+  /// Number of intakes expected on a scheduled day. The treatment is
+  /// complete for the day once this many doses were logged.
+  int get dosesPerDay {
+    switch (frequencyType) {
+      case FrequencyType.daily:
+      case FrequencyType.weekdays:
+      case FrequencyType.cyclic:
+        return times.isEmpty ? 1 : times.length;
+      case FrequencyType.interval:
+        switch (intervalUnit) {
+          case IntervalUnit.hours:
+            return intervalValue >= 24 ? 1 : (24 / intervalValue).ceil();
+          case IntervalUnit.days:
+          case IntervalUnit.months:
+            return 1;
+        }
+      case FrequencyType.onDemand:
+        return 1;
+    }
+  }
+
   /// Whether a dose is scheduled (or available, for on-demand) on [day]
   /// (date only, time ignored): the treatment is active, within its
   /// start/end range, and [day] matches the frequency pattern.
