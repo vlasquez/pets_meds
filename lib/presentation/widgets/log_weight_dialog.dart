@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../l10n/strings.dart';
 import '../blocs/weight/weight_bloc.dart';
@@ -54,8 +53,8 @@ Future<void> showLogWeightDialog(BuildContext context,
               final value =
                   double.tryParse(controller.text.replaceAll(',', '.'));
               if (value == null || value <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(s.invalidNumber)));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(s.invalidNumber)));
                 return;
               }
               bloc.add(WeightLogged(weightKg: value, measuredAt: date));

@@ -163,6 +163,7 @@ class TreatmentsScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'treatments_fab', // Unique within the IndexedStack.
         tooltip: s.addMedication,
         onPressed: () => _add(context),
         child: const Icon(Icons.add),
