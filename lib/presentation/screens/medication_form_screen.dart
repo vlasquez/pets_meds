@@ -8,11 +8,22 @@ import '../../domain/entities/schedule_time.dart';
 import '../../l10n/strings.dart';
 import '../blocs/medications/medications_bloc.dart';
 
-/// Expects a [MedicationsBloc] to be provided above it (via BlocProvider.value).
+/// Form to create/edit a medication for [pet].
+///
+/// By default it dispatches [MedicationSaved] to a [MedicationsBloc]
+/// provided above it (via BlocProvider.value). When [onSave] is given
+/// (e.g. from the Treatments tab), it is called instead.
 class MedicationFormScreen extends StatefulWidget {
   final Pet pet;
   final Medication? medication;
-  const MedicationFormScreen({super.key, required this.pet, this.medication});
+  final void Function(Medication)? onSave;
+
+  const MedicationFormScreen({
+    super.key,
+    required this.pet,
+    this.medication,
+    this.onSave,
+  });
 
   @override
   State<MedicationFormScreen> createState() => _MedicationFormScreenState();
@@ -111,12 +122,16 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
     );
 
-    context.read<MedicationsBloc>().add(MedicationSaved(
-          medication: med,
-          notificationTitle: s.reminderTitle(widget.pet.name),
-          notificationBody: s.reminderBody(
-              med.name, s.formatDose(med.doseAmount, med.doseUnit)),
-        ));
+    if (widget.onSave != null) {
+      widget.onSave!(med);
+    } else {
+      context.read<MedicationsBloc>().add(MedicationSaved(
+            medication: med,
+            notificationTitle: s.reminderTitle(widget.pet.name),
+            notificationBody: s.reminderBody(
+                med.name, s.formatDose(med.doseAmount, med.doseUnit)),
+          ));
+    }
 
     Navigator.of(context).pop();
   }

@@ -3,11 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/medication.dart';
 import '../../domain/entities/pet.dart';
+import '../../domain/entities/vaccination.dart';
 import '../../injection.dart';
 import '../../l10n/strings.dart';
 import '../blocs/medications/medications_bloc.dart';
 import '../blocs/pets/pets_bloc.dart';
+import '../blocs/vaccinations/vaccinations_bloc.dart';
 import '../blocs/weight/weight_bloc.dart';
+import '../widgets/add_vaccination_dialog.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/log_weight_dialog.dart';
@@ -43,6 +46,14 @@ class PetDetailScreen extends StatelessWidget {
             logWeight: sl(),
             deleteWeightEntry: sl(),
           )..add(const WeightHistoryRequested()),
+        ),
+        BlocProvider(
+          create: (_) => VaccinationsBloc(
+            pet: pet,
+            getVaccinations: sl(),
+            saveVaccination: sl(),
+            deleteVaccination: sl(),
+          )..add(const VaccinationsRequested()),
         ),
       ],
       child: _PetDetailView(pet: pet),
@@ -156,6 +167,8 @@ class _PetDetailView extends StatelessWidget {
             _PetHeader(pet: pet),
             const Divider(height: 1),
             _WeightSection(onSeeHistory: _openWeightHistory),
+            const Divider(height: 1),
+            const _VaccinationsSection(),
             const Divider(height: 1),
             _MedicationsSection(
               onMarkGiven: _markGiven,
@@ -275,6 +288,76 @@ class _WeightSection extends StatelessWidget {
                   onPressed: () => showLogWeightDialog(context,
                       bloc: context.read<WeightBloc>()),
                 ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Vaccinations section: registered vaccines with next-dose reminders.
+class _VaccinationsSection extends StatelessWidget {
+  const _VaccinationsSection();
+
+  String _fmtDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _delete(BuildContext context, Vaccination vaccination) async {
+    final s = S.of(context);
+    final bloc = context.read<VaccinationsBloc>();
+    final confirmed = await showConfirmDialog(
+      context,
+      title: s.deleteVaccination,
+      content: s.deleteVaccinationConfirm,
+    );
+    if (confirmed) bloc.add(VaccinationDeleted(vaccination));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: BlocBuilder<VaccinationsBloc, VaccinationsState>(
+        builder: (context, state) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(s.vaccinations,
+                  style: Theme.of(context).textTheme.titleMedium),
+              if (state.vaccinations.isEmpty &&
+                  state.status == VaccinationsStatus.success)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(s.noVaccinations,
+                      style: Theme.of(context).textTheme.bodyMedium),
+                ),
+              for (final v in state.vaccinations)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.vaccines),
+                  title: Text(v.vaccineType),
+                  subtitle: Text([
+                    _fmtDate(v.appliedAt),
+                    if (v.hasReminder)
+                      s.reminderEvery(v.reminderValue!, v.reminderUnit!),
+                    if (v.nextDueDate != null)
+                      s.nextDose(_fmtDate(v.nextDueDate!)),
+                  ].join(' · ')),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: s.deleteVaccination,
+                    onPressed: () => _delete(context, v),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              FilledButton.tonalIcon(
+                icon: const Icon(Icons.add),
+                label: Text(s.addVaccination),
+                onPressed: () => showAddVaccinationDialog(context,
+                    bloc: context.read<VaccinationsBloc>()),
               ),
             ],
           );

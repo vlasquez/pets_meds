@@ -4,6 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../../domain/entities/medication.dart';
 import '../../../domain/entities/schedule_time.dart';
+import '../../../domain/entities/vaccination.dart';
 
 /// Wraps flutter_local_notifications: permission setup and
 /// (re)scheduling of medication reminders.
@@ -95,6 +96,39 @@ class NotificationDataSource {
     for (var i = 0; i < 100; i++) {
       await _plugin.cancel(_notificationId(med.id!, i));
     }
+  }
+
+  /// Vaccination ids live in their own range to avoid colliding with
+  /// medication reminder ids (medicationId * 100 + timeIndex).
+  int _vaccinationNotificationId(int vaccinationId) =>
+      2000000000 - vaccinationId;
+
+  /// Schedules a one-shot reminder at 09:00 on the vaccination's due date.
+  Future<void> scheduleVaccination(Vaccination vaccination,
+      {required String title, required String body}) async {
+    await cancelVaccination(vaccination);
+    final due = vaccination.nextDueDate;
+    if (vaccination.id == null || due == null) return;
+
+    final when =
+        tz.TZDateTime(tz.local, due.year, due.month, due.day, 9, 0);
+    if (!when.isAfter(tz.TZDateTime.now(tz.local))) return;
+
+    await _plugin.zonedSchedule(
+      _vaccinationNotificationId(vaccination.id!),
+      title,
+      body,
+      when,
+      _details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  Future<void> cancelVaccination(Vaccination vaccination) async {
+    if (vaccination.id == null) return;
+    await _plugin.cancel(_vaccinationNotificationId(vaccination.id!));
   }
 
   tz.TZDateTime _nextInstanceOf(ScheduleTime time) {
