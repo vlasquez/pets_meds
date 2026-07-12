@@ -18,6 +18,9 @@ final class TodayItem extends Equatable {
   /// Intakes expected today.
   int get targetCount => treatment.dosesPerDay;
 
+  /// The intake hours of the day (may be empty for on-demand).
+  List<ScheduleTime> get intakeTimes => treatment.intakeTimesPerDay;
+
   /// The treatment is complete for the day when every intake was taken.
   bool get completed => givenCount >= targetCount;
 

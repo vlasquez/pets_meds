@@ -140,25 +140,45 @@ class Treatment extends Equatable {
     return DateTime(year, month, day);
   }
 
-  /// Number of intakes expected on a scheduled day. The treatment is
-  /// complete for the day once this many doses were logged.
-  int get dosesPerDay {
+  /// The intake hours of a scheduled day. For hour-based intervals the
+  /// hours are generated from the first intake time ([times.first])
+  /// stepping [intervalValue] hours until midnight (e.g. first intake
+  /// 08:00 every 12 h → 08:00, 20:00). Empty for on-demand.
+  List<ScheduleTime> get intakeTimesPerDay {
     switch (frequencyType) {
       case FrequencyType.daily:
       case FrequencyType.weekdays:
       case FrequencyType.cyclic:
-        return times.isEmpty ? 1 : times.length;
+        return List.of(times)..sort();
       case FrequencyType.interval:
         switch (intervalUnit) {
           case IntervalUnit.hours:
-            return intervalValue >= 24 ? 1 : (24 / intervalValue).ceil();
+            final first =
+                times.isEmpty ? const ScheduleTime(8, 0) : times.first;
+            if (intervalValue <= 0 || intervalValue >= 24) return [first];
+            final result = <ScheduleTime>[];
+            var minutes = first.inMinutes;
+            while (minutes < 24 * 60) {
+              result.add(ScheduleTime(minutes ~/ 60, minutes % 60));
+              minutes += intervalValue * 60;
+            }
+            return result;
           case IntervalUnit.days:
           case IntervalUnit.months:
-            return 1;
+            return times.isEmpty
+                ? const [ScheduleTime(8, 0)]
+                : [times.first];
         }
       case FrequencyType.onDemand:
-        return 1;
+        return const [];
     }
+  }
+
+  /// Number of intakes expected on a scheduled day. The treatment is
+  /// complete for the day once this many doses were logged.
+  int get dosesPerDay {
+    final intakes = intakeTimesPerDay.length;
+    return intakes == 0 ? 1 : intakes;
   }
 
   /// Whether a dose is scheduled (or available, for on-demand) on [day]

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/pet.dart';
+import '../../../domain/entities/schedule_time.dart';
 import '../../../domain/entities/treatment.dart';
 import '../../../domain/usecases/delete_dose_log.dart';
 import '../../../domain/usecases/get_all_treatments.dart';

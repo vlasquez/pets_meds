@@ -150,18 +150,18 @@ class _TodayTreatmentTile extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     for (var i = 0; i < item.targetCount; i++)
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        icon: i < item.givenCount
-                            ? Icon(Icons.check_circle,
-                                color: theme.colorScheme.primary)
-                            : const Icon(Icons.check_circle_outline),
-                        tooltip:
-                            i < item.givenCount ? s.unmarkGiven : s.markGiven,
-                        onPressed: i < item.givenCount
+                      _IntakeChip(
+                        label: i < item.intakeTimes.length
+                            ? item.intakeTimes[i].format()
+                            : '#${i + 1}',
+                        taken: i < item.givenCount,
+                        onTap: i < item.givenCount
                             ? () => _unmarkLatest(context)
                             : () => _markGiven(context),
                       ),
@@ -172,6 +172,32 @@ class _TodayTreatmentTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One intake of the day: shows the intake hour and whether it was taken.
+class _IntakeChip extends StatelessWidget {
+  final String label;
+  final bool taken;
+  final VoidCallback onTap;
+
+  const _IntakeChip({
+    required this.label,
+    required this.taken,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FilterChip(
+      selected: taken,
+      showCheckmark: true,
+      avatar: taken ? null : const Icon(Icons.schedule, size: 18),
+      label: Text(label),
+      selectedColor: theme.colorScheme.primaryContainer,
+      onSelected: (_) => onTap(),
     );
   }
 }
