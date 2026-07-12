@@ -6,28 +6,37 @@ import 'data/datasources/local/medication_local_datasource.dart';
 import 'data/datasources/local/notification_datasource.dart';
 import 'data/datasources/local/pet_local_datasource.dart';
 import 'data/datasources/local/photo_storage.dart';
+import 'data/datasources/local/vaccination_local_datasource.dart';
 import 'data/datasources/local/weight_local_datasource.dart';
 import 'data/repositories/dose_log_repository_impl.dart';
 import 'data/repositories/medication_repository_impl.dart';
 import 'data/repositories/pet_repository_impl.dart';
 import 'data/repositories/reminder_scheduler_impl.dart';
+import 'data/repositories/vaccination_reminder_scheduler_impl.dart';
+import 'data/repositories/vaccination_repository_impl.dart';
 import 'data/repositories/weight_repository_impl.dart';
 import 'domain/repositories/dose_log_repository.dart';
 import 'domain/repositories/medication_repository.dart';
 import 'domain/repositories/pet_repository.dart';
 import 'domain/repositories/reminder_scheduler.dart';
+import 'domain/repositories/vaccination_reminder_scheduler.dart';
+import 'domain/repositories/vaccination_repository.dart';
 import 'domain/repositories/weight_repository.dart';
 import 'domain/usecases/delete_medication.dart';
 import 'domain/usecases/delete_pet.dart';
+import 'domain/usecases/delete_vaccination.dart';
 import 'domain/usecases/delete_weight_entry.dart';
+import 'domain/usecases/get_all_medications.dart';
 import 'domain/usecases/get_dose_history.dart';
 import 'domain/usecases/get_medications.dart';
 import 'domain/usecases/get_pets.dart';
+import 'domain/usecases/get_vaccinations.dart';
 import 'domain/usecases/get_weight_history.dart';
 import 'domain/usecases/log_dose.dart';
 import 'domain/usecases/log_weight.dart';
 import 'domain/usecases/save_medication.dart';
 import 'domain/usecases/save_pet.dart';
+import 'domain/usecases/save_vaccination.dart';
 
 final sl = GetIt.instance;
 
@@ -39,6 +48,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => MedicationLocalDataSource(sl()));
   sl.registerLazySingleton(() => DoseLogLocalDataSource(sl()));
   sl.registerLazySingleton(() => WeightLocalDataSource(sl()));
+  sl.registerLazySingleton(() => VaccinationLocalDataSource(sl()));
   sl.registerLazySingleton(() => NotificationDataSource());
   sl.registerLazySingleton(() => PhotoStorage());
 
@@ -52,6 +62,10 @@ Future<void> initDependencies() async {
       () => ReminderSchedulerImpl(sl()));
   sl.registerLazySingleton<WeightRepository>(
       () => WeightRepositoryImpl(sl()));
+  sl.registerLazySingleton<VaccinationRepository>(
+      () => VaccinationRepositoryImpl(sl()));
+  sl.registerLazySingleton<VaccinationReminderScheduler>(
+      () => VaccinationReminderSchedulerImpl(sl()));
 
   // Use cases
   sl.registerLazySingleton(() => GetPets(sl()));
@@ -65,6 +79,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetWeightHistory(sl()));
   sl.registerLazySingleton(() => LogWeight(sl()));
   sl.registerLazySingleton(() => DeleteWeightEntry(sl()));
+  sl.registerLazySingleton(() => GetAllMedications(sl()));
+  sl.registerLazySingleton(() => GetVaccinations(sl()));
+  sl.registerLazySingleton(() => SaveVaccination(sl(), sl()));
+  sl.registerLazySingleton(() => DeleteVaccination(sl(), sl()));
 
   await sl<NotificationDataSource>().init();
 }

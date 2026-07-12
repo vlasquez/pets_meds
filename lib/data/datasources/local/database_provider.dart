@@ -14,7 +14,7 @@ class DatabaseProvider {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pet_meds.db'),
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pets(
@@ -52,6 +52,7 @@ class DatabaseProvider {
           )
         ''');
         await _createWeightTable(db);
+        await _createVaccinationsTable(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -69,6 +70,9 @@ class DatabaseProvider {
               "UPDATE medications SET notes = COALESCE(notes || ' · ', '') || dosage "
               "WHERE dosage IS NOT NULL AND dosage != ''");
         }
+        if (oldVersion < 4) {
+          await _createVaccinationsTable(db);
+        }
       },
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -84,6 +88,20 @@ class DatabaseProvider {
         weightKg REAL NOT NULL,
         measuredAt TEXT NOT NULL,
         note TEXT
+      )
+    ''');
+  }
+
+  Future<void> _createVaccinationsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE vaccinations(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        petId INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+        vaccineType TEXT NOT NULL,
+        appliedAt TEXT NOT NULL,
+        reminderValue INTEGER,
+        reminderUnit TEXT,
+        notes TEXT
       )
     ''');
   }

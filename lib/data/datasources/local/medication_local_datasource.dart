@@ -13,6 +13,13 @@ class MedicationLocalDataSource {
     return rows.map(MedicationModel.fromMap).toList();
   }
 
+  Future<List<MedicationModel>> getAll() async {
+    final db = await _provider.database;
+    final rows =
+        await db.query('medications', orderBy: 'name COLLATE NOCASE');
+    return rows.map(MedicationModel.fromMap).toList();
+  }
+
   Future<int> insert(MedicationModel med) async {
     final db = await _provider.database;
     return db.insert('medications', med.toMap()..remove('id'));

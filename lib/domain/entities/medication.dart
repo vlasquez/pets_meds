@@ -70,6 +70,23 @@ class Medication extends Equatable {
         notes: notes ?? this.notes,
       );
 
+  /// Whether a dose is scheduled on [day] (date only, time ignored):
+  /// the medication is active, within its start/end range, and — for
+  /// interval-based schedules — [day] falls on a multiple of the interval.
+  bool isScheduledOn(DateTime day) {
+    if (!active) return false;
+    final date = DateTime(day.year, day.month, day.day);
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    if (date.isBefore(start)) return false;
+    if (endDate != null) {
+      final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+      if (date.isAfter(end)) return false;
+    }
+    if (frequencyType == FrequencyType.daily) return true;
+    final daysSinceStart = date.difference(start).inDays;
+    return daysSinceStart % intervalDays == 0;
+  }
+
   @override
   List<Object?> get props => [
         id,

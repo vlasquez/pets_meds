@@ -5,7 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'injection.dart';
 import 'l10n/strings.dart';
 import 'presentation/blocs/pets/pets_bloc.dart';
-import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/main_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +38,7 @@ class PetMedsApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en'), Locale('es')],
-        home: const HomeScreen(),
+        home: const MainScreen(),
       ),
     );
   }

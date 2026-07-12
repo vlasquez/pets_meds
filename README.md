@@ -72,9 +72,9 @@ Three layers with a strict dependency rule — presentation → domain ← data.
 
 Everything UI-related, in three parts:
 
-- **Screens** (`screens/`) — full routes: `HomeScreen`, `PetDetailScreen`, `PetFormScreen`, `MedicationFormScreen`, `HistoryScreen`.
-- **Widgets** (`widgets/`) — reusable building blocks: `PetListTile`, `MedicationCard`, `EmptyState`, `showConfirmDialog`.
-- **State management** (`blocs/`) — `PetsBloc`, `MedicationsBloc`, `HistoryBloc`, each with its events (inputs) and states (outputs). Blocs depend only on domain use cases.
+- **Screens** (`screens/`) — full routes: `MainScreen` (bottom navigation: Home / Pets / Treatments), `HomeScreen` (today's treatments per pet), `PetsScreen`, `TreatmentsScreen` (all medications, assignable to a pet), `PetDetailScreen`, `PetFormScreen`, `MedicationFormScreen`, `HistoryScreen`.
+- **Widgets** (`widgets/`) — reusable building blocks: `PetListTile`, `MedicationCard`, `EmptyState`, `SpeciesSilhouette` (cat/dog fallback avatars), `showConfirmDialog`, `showAddVaccinationDialog`.
+- **State management** (`blocs/`) — `PetsBloc`, `MedicationsBloc`, `HistoryBloc`, `VaccinationsBloc`, `TodayBloc`, `TreatmentsBloc`, each with its events (inputs) and states (outputs). Blocs depend only on domain use cases.
 
 ### Domain layer (`lib/domain/`)
 

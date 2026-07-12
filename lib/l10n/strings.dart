@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../domain/entities/dose_unit.dart';
+import '../domain/entities/vaccination.dart';
 
 /// Lightweight ES/EN localization without codegen.
 class S {
@@ -176,6 +177,78 @@ class S {
   String get date => _es ? 'Fecha' : 'Date';
   String weightLoggedSnack(String kg) =>
       _es ? 'Peso registrado: $kg kg' : 'Weight logged: $kg kg';
+
+  // Bottom navigation.
+  String get homeTab => _es ? 'Inicio' : 'Home';
+  String get petsTab => _es ? 'Mascotas' : 'Pets';
+  String get treatmentsTab => _es ? 'Tratamientos' : 'Treatments';
+  String get today => _es ? 'Hoy' : 'Today';
+  String get noTreatmentsToday => _es
+      ? 'No hay tratamientos programados para hoy.'
+      : 'No treatments scheduled for today.';
+  String get noTreatments => _es
+      ? 'Aún no hay medicamentos. Toca + para agregar uno.'
+      : 'No medications yet. Tap + to add one.';
+  String get selectPet => _es ? 'Selecciona una mascota' : 'Select a pet';
+  String get addPetFirst => _es
+      ? 'Primero agrega una mascota en la pestaña Mascotas.'
+      : 'First add a pet in the Pets tab.';
+
+  // Vaccinations.
+  String get vaccinations => _es ? 'Vacunas' : 'Vaccinations';
+  String get addVaccination => _es ? 'Agregar vacuna' : 'Add vaccination';
+  String get vaccineType => _es ? 'Tipo de vacuna' : 'Vaccine type';
+  String get vaccinationDate =>
+      _es ? 'Fecha de aplicación' : 'Application date';
+  String get reminderLabel => _es ? 'Recordatorio' : 'Reminder';
+  String get noReminder => _es ? 'Sin recordatorio' : 'No reminder';
+  String get noVaccinations => _es
+      ? 'Aún no hay vacunas registradas.'
+      : 'No vaccinations recorded yet.';
+  String get deleteVaccination =>
+      _es ? 'Eliminar vacuna' : 'Delete vaccination';
+  String get deleteVaccinationConfirm => _es
+      ? '¿Eliminar esta vacuna y su recordatorio?'
+      : 'Delete this vaccination and its reminder?';
+
+  /// "mes(es)", "año(s)", "semana(s)" — localized unit name.
+  String reminderUnitName(ReminderUnit unit, int value) {
+    final plural = value != 1;
+    if (_es) {
+      switch (unit) {
+        case ReminderUnit.weeks:
+          return plural ? 'semanas' : 'semana';
+        case ReminderUnit.months:
+          return plural ? 'meses' : 'mes';
+        case ReminderUnit.years:
+          return plural ? 'años' : 'año';
+      }
+    }
+    switch (unit) {
+      case ReminderUnit.weeks:
+        return plural ? 'weeks' : 'week';
+      case ReminderUnit.months:
+        return plural ? 'months' : 'month';
+      case ReminderUnit.years:
+        return plural ? 'years' : 'year';
+    }
+  }
+
+  /// "Cada 6 meses" / "Every 6 months"
+  String reminderEvery(int value, ReminderUnit unit) => _es
+      ? 'Cada $value ${reminderUnitName(unit, value)}'
+      : 'Every $value ${reminderUnitName(unit, value)}';
+
+  /// "Próxima dosis: 2027-01-11"
+  String nextDose(String date) =>
+      _es ? 'Próxima dosis: $date' : 'Next dose: $date';
+
+  String vaccineReminderTitle(String petName) => _es
+      ? 'Vacuna para $petName'
+      : 'Vaccination for $petName';
+  String vaccineReminderBody(String vaccineType) => _es
+      ? 'Es hora de renovar la vacuna: $vaccineType'
+      : 'Time to renew the vaccine: $vaccineType';
 
   String reminderTitle(String petName) => _es
       ? 'Medicamento para $petName'

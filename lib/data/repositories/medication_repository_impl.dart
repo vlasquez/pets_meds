@@ -12,6 +12,9 @@ class MedicationRepositoryImpl implements MedicationRepository {
       _local.getForPet(petId);
 
   @override
+  Future<List<Medication>> getAllMedications() => _local.getAll();
+
+  @override
   Future<Medication> insertMedication(Medication medication) async {
     final id = await _local.insert(MedicationModel.fromEntity(medication));
     return medication.copyWith(id: id);
