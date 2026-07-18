@@ -6,6 +6,7 @@ import 'data/datasources/local/medication_local_datasource.dart';
 import 'data/datasources/local/notification_datasource.dart';
 import 'data/datasources/local/pet_local_datasource.dart';
 import 'data/datasources/local/photo_storage.dart';
+import 'data/datasources/local/settings_local_datasource.dart';
 import 'data/datasources/local/treatment_local_datasource.dart';
 import 'data/datasources/local/vaccination_local_datasource.dart';
 import 'data/datasources/local/weight_local_datasource.dart';
@@ -13,6 +14,7 @@ import 'data/repositories/dose_log_repository_impl.dart';
 import 'data/repositories/medication_repository_impl.dart';
 import 'data/repositories/pet_repository_impl.dart';
 import 'data/repositories/reminder_scheduler_impl.dart';
+import 'data/repositories/settings_repository_impl.dart';
 import 'data/repositories/treatment_repository_impl.dart';
 import 'data/repositories/vaccination_reminder_scheduler_impl.dart';
 import 'data/repositories/vaccination_repository_impl.dart';
@@ -21,6 +23,7 @@ import 'domain/repositories/dose_log_repository.dart';
 import 'domain/repositories/medication_repository.dart';
 import 'domain/repositories/pet_repository.dart';
 import 'domain/repositories/reminder_scheduler.dart';
+import 'domain/repositories/settings_repository.dart';
 import 'domain/repositories/treatment_repository.dart';
 import 'domain/repositories/vaccination_reminder_scheduler.dart';
 import 'domain/repositories/vaccination_repository.dart';
@@ -34,6 +37,7 @@ import 'domain/usecases/get_all_treatments.dart';
 import 'domain/usecases/get_dose_history.dart';
 import 'domain/usecases/get_medications.dart';
 import 'domain/usecases/get_pets.dart';
+import 'domain/usecases/get_settings.dart';
 import 'domain/usecases/get_treatments.dart';
 import 'domain/usecases/get_vaccinations.dart';
 import 'domain/usecases/get_weight_history.dart';
@@ -41,6 +45,7 @@ import 'domain/usecases/log_dose.dart';
 import 'domain/usecases/log_weight.dart';
 import 'domain/usecases/save_medication.dart';
 import 'domain/usecases/save_pet.dart';
+import 'domain/usecases/save_settings.dart';
 import 'domain/usecases/save_treatment.dart';
 import 'domain/usecases/save_vaccination.dart';
 
@@ -58,6 +63,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => VaccinationLocalDataSource(sl()));
   sl.registerLazySingleton(() => NotificationDataSource());
   sl.registerLazySingleton(() => PhotoStorage());
+  sl.registerLazySingleton(() => SettingsLocalDataSource());
 
   // Repositories (domain contracts → data implementations)
   sl.registerLazySingleton<PetRepository>(() => PetRepositoryImpl(sl()));
@@ -75,6 +81,8 @@ Future<void> initDependencies() async {
       () => VaccinationRepositoryImpl(sl()));
   sl.registerLazySingleton<VaccinationReminderScheduler>(
       () => VaccinationReminderSchedulerImpl(sl()));
+  sl.registerLazySingleton<SettingsRepository>(
+      () => SettingsRepositoryImpl(sl()));
 
   // Use cases
   sl.registerLazySingleton(() => GetPets(sl()));
@@ -95,6 +103,8 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => GetVaccinations(sl()));
   sl.registerLazySingleton(() => SaveVaccination(sl(), sl()));
   sl.registerLazySingleton(() => DeleteVaccination(sl(), sl()));
+  sl.registerLazySingleton(() => GetSettings(sl()));
+  sl.registerLazySingleton(() => SaveSettings(sl()));
 
   await sl<NotificationDataSource>().init();
 }

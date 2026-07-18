@@ -3,14 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../injection.dart';
 import '../../l10n/strings.dart';
+import '../blocs/progress/progress_bloc.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import 'home_screen.dart';
 import 'pets_screen.dart';
+import 'progress_screen.dart';
+import 'settings_screen.dart';
 import 'treatments_screen.dart';
 
 /// Root screen: bottom navigation with Home (today's treatments),
-/// Pets (pet list) and Treatments (all medications).
+/// Pets, Treatments, Progress and Settings.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -42,6 +45,15 @@ class _MainScreenState extends State<MainScreen> {
             deleteTreatment: sl(),
           )..add(const TreatmentsRequested()),
         ),
+        BlocProvider(
+          create: (_) => ProgressBloc(
+            getPets: sl(),
+            getAllTreatments: sl(),
+            getDoseHistory: sl(),
+            logDose: sl(),
+            deleteDoseLog: sl(),
+          )..add(const ProgressRequested()),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -53,6 +65,8 @@ class _MainScreenState extends State<MainScreen> {
                 HomeScreen(),
                 PetsScreen(),
                 TreatmentsScreen(),
+                ProgressScreen(),
+                SettingsScreen(),
               ],
             ),
             bottomNavigationBar: NavigationBar(
@@ -66,6 +80,8 @@ class _MainScreenState extends State<MainScreen> {
                   context
                       .read<TreatmentsBloc>()
                       .add(const TreatmentsRequested());
+                } else if (i == 3) {
+                  context.read<ProgressBloc>().add(const ProgressRequested());
                 }
               },
               destinations: [
@@ -83,6 +99,15 @@ class _MainScreenState extends State<MainScreen> {
                   icon: const Icon(Icons.medication_outlined),
                   selectedIcon: const Icon(Icons.medication),
                   label: s.treatmentsTab,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.insights),
+                  label: s.progressTab,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: s.settingsTab,
                 ),
               ],
             ),

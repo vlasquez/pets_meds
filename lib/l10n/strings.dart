@@ -378,6 +378,17 @@ class S {
   String get homeTab => _es ? 'Inicio' : 'Home';
   String get petsTab => _es ? 'Mascotas' : 'Pets';
   String get treatmentsTab => _es ? 'Tratamientos' : 'Treatments';
+  String get progressTab => _es ? 'Progreso' : 'Progress';
+  String get settingsTab => _es ? 'Ajustes' : 'Settings';
+
+  // Settings.
+  String get language => _es ? 'Idioma' : 'Language';
+  String get theme => _es ? 'Tema' : 'Theme';
+  String get systemDefault => _es ? 'Sistema' : 'System';
+  String get lightTheme => _es ? 'Claro' : 'Light';
+  String get darkTheme => _es ? 'Oscuro' : 'Dark';
+  String get spanish => 'Español';
+  String get english => 'English';
   String get today => _es ? 'Hoy' : 'Today';
   String get noTreatmentsToday => _es
       ? 'No hay tratamientos programados para hoy.'
