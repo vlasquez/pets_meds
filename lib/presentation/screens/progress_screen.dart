@@ -89,7 +89,7 @@ class _PetProgressCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(s.nTreatments(entries.length)),
+            Text(s.nActiveTreatments(entries.length)),
             const SizedBox(height: 6),
             Row(
               children: [
