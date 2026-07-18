@@ -385,6 +385,9 @@ class S {
   String get darkTheme => _es ? 'Oscuro' : 'Dark';
   String get spanish => 'Español';
   String get english => 'English';
+  String get about => _es ? 'Acerca de' : 'About';
+  String get versionLabel => _es ? 'Versión' : 'Version';
+  String get contactLabel => _es ? 'Contacto' : 'Contact';
   String get today => _es ? 'Hoy' : 'Today';
   String get noTreatmentsToday => _es
       ? 'No hay tratamientos programados para hoy.'
