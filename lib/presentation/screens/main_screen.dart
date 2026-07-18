@@ -63,9 +63,9 @@ class _MainScreenState extends State<MainScreen> {
               index: _index,
               children: const [
                 HomeScreen(),
-                PetsScreen(),
                 TreatmentsScreen(),
                 ProgressScreen(),
+                PetsScreen(),
                 SettingsScreen(),
               ],
             ),
@@ -76,11 +76,11 @@ class _MainScreenState extends State<MainScreen> {
                 // Refresh the tab's data when it becomes visible.
                 if (i == 0) {
                   context.read<TodayBloc>().add(const TodayRequested());
-                } else if (i == 2) {
+                } else if (i == 1) {
                   context
                       .read<TreatmentsBloc>()
                       .add(const TreatmentsRequested());
-                } else if (i == 3) {
+                } else if (i == 2) {
                   context.read<ProgressBloc>().add(const ProgressRequested());
                 }
               },
@@ -91,11 +91,6 @@ class _MainScreenState extends State<MainScreen> {
                   label: s.homeTab,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.pets_outlined),
-                  selectedIcon: const Icon(Icons.pets),
-                  label: s.petsTab,
-                ),
-                NavigationDestination(
                   icon: const Icon(Icons.medication_outlined),
                   selectedIcon: const Icon(Icons.medication),
                   label: s.treatmentsTab,
@@ -103,6 +98,11 @@ class _MainScreenState extends State<MainScreen> {
                 NavigationDestination(
                   icon: const Icon(Icons.insights),
                   label: s.progressTab,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.pets_outlined),
+                  selectedIcon: const Icon(Icons.pets),
+                  label: s.petsTab,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.settings_outlined),
