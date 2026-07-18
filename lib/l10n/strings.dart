@@ -411,6 +411,9 @@ class S {
   String get editTreatment => _es ? 'Editar tratamiento' : 'Edit treatment';
   String get deleteTreatment =>
       _es ? 'Eliminar tratamiento' : 'Delete treatment';
+  String nTreatments(int n) => _es
+      ? '$n tratamiento${n == 1 ? '' : 's'}'
+      : '$n treatment${n == 1 ? '' : 's'}';
   String get deleteTreatmentConfirm => _es
       ? '¿Eliminar este tratamiento y sus recordatorios?'
       : 'Delete this treatment and its reminders?';
