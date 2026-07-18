@@ -413,6 +413,9 @@ class S {
   String nTreatments(int n) => _es
       ? '$n tratamiento${n == 1 ? '' : 's'}'
       : '$n treatment${n == 1 ? '' : 's'}';
+  String get noActiveTreatments => _es
+      ? 'Aún no hay tratamientos activos.'
+      : 'No active treatments yet.';
   String nActiveTreatments(int n) => _es
       ? '$n tratamiento${n == 1 ? '' : 's'} activo${n == 1 ? '' : 's'}'
       : '$n active treatment${n == 1 ? '' : 's'}';
