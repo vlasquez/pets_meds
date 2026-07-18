@@ -59,3 +59,8 @@ ios/Flutter/flutter_export_environment.sh
 
 # macOS
 **/.DS_Store
+
+# Release signing (never commit)
+android/key.properties
+android/upload-keystore.jks
+*.jks

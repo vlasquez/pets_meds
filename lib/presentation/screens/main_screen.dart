@@ -13,7 +13,7 @@ import 'settings_screen.dart';
 import 'treatments_screen.dart';
 
 /// Root screen: bottom navigation with Home (today's treatments),
-/// Pets, Treatments, Progress and Settings.
+/// Treatments, Progress, Pets and Settings.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
