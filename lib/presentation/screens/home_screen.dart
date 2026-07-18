@@ -5,6 +5,7 @@ import '../../l10n/strings.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/intake_chip.dart';
 import '../widgets/pet_avatar.dart';
 import 'pet_detail_screen.dart';
 
@@ -195,7 +196,7 @@ class _TodayTreatmentTileState extends State<_TodayTreatmentTile> {
                           runSpacing: 4,
                           children: [
                             for (var i = 0; i < item.targetCount; i++)
-                              _IntakeChip(
+                              IntakeChip(
                                 label: i < item.intakeTimes.length
                                     ? item.intakeTimes[i].format()
                                     : '#${i + 1}',
@@ -212,32 +213,6 @@ class _TodayTreatmentTileState extends State<_TodayTreatmentTile> {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// One intake of the day: shows the intake hour and whether it was taken.
-class _IntakeChip extends StatelessWidget {
-  final String label;
-  final bool taken;
-  final VoidCallback onTap;
-
-  const _IntakeChip({
-    required this.label,
-    required this.taken,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return FilterChip(
-      selected: taken,
-      showCheckmark: true,
-      avatar: taken ? null : const Icon(Icons.schedule, size: 18),
-      label: Text(label),
-      selectedColor: theme.colorScheme.primaryContainer,
-      onSelected: (_) => onTap(),
     );
   }
 }

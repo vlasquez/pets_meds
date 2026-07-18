@@ -3,14 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../injection.dart';
 import '../../l10n/strings.dart';
+import '../blocs/progress/progress_bloc.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import 'home_screen.dart';
 import 'pets_screen.dart';
+import 'progress_screen.dart';
+import 'settings_screen.dart';
 import 'treatments_screen.dart';
 
 /// Root screen: bottom navigation with Home (today's treatments),
-/// Pets (pet list) and Treatments (all medications).
+/// Treatments, Progress, Pets and Settings.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -42,6 +45,15 @@ class _MainScreenState extends State<MainScreen> {
             deleteTreatment: sl(),
           )..add(const TreatmentsRequested()),
         ),
+        BlocProvider(
+          create: (_) => ProgressBloc(
+            getPets: sl(),
+            getAllTreatments: sl(),
+            getDoseHistory: sl(),
+            logDose: sl(),
+            deleteDoseLog: sl(),
+          )..add(const ProgressRequested()),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -51,8 +63,10 @@ class _MainScreenState extends State<MainScreen> {
               index: _index,
               children: const [
                 HomeScreen(),
-                PetsScreen(),
                 TreatmentsScreen(),
+                ProgressScreen(),
+                PetsScreen(),
+                SettingsScreen(),
               ],
             ),
             bottomNavigationBar: NavigationBar(
@@ -62,10 +76,12 @@ class _MainScreenState extends State<MainScreen> {
                 // Refresh the tab's data when it becomes visible.
                 if (i == 0) {
                   context.read<TodayBloc>().add(const TodayRequested());
-                } else if (i == 2) {
+                } else if (i == 1) {
                   context
                       .read<TreatmentsBloc>()
                       .add(const TreatmentsRequested());
+                } else if (i == 2) {
+                  context.read<ProgressBloc>().add(const ProgressRequested());
                 }
               },
               destinations: [
@@ -75,14 +91,23 @@ class _MainScreenState extends State<MainScreen> {
                   label: s.homeTab,
                 ),
                 NavigationDestination(
+                  icon: const Icon(Icons.medication_outlined),
+                  selectedIcon: const Icon(Icons.medication),
+                  label: s.treatmentsTab,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.insights),
+                  label: s.progressTab,
+                ),
+                NavigationDestination(
                   icon: const Icon(Icons.pets_outlined),
                   selectedIcon: const Icon(Icons.pets),
                   label: s.petsTab,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.medication_outlined),
-                  selectedIcon: const Icon(Icons.medication),
-                  label: s.treatmentsTab,
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: s.settingsTab,
                 ),
               ],
             ),

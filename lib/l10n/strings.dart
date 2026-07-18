@@ -80,7 +80,7 @@ class S {
       case DogBreed.mixed:
         return _es ? 'Criollo / Mestizo' : 'Mixed breed';
       case DogBreed.other:
-        return _es ? 'Otra' : 'Other';
+        return _es ? 'Otro' : 'Other';
     }
   }
 
@@ -117,7 +117,7 @@ class S {
       case CatBreed.mixed:
         return _es ? 'Criollo / Mestizo' : 'Mixed breed';
       case CatBreed.other:
-        return _es ? 'Otra' : 'Other';
+        return _es ? 'Otro' : 'Other';
     }
   }
 
@@ -231,10 +231,12 @@ class S {
 
   String get frequency => _es ? 'Frecuencia' : 'Frequency';
   String get everyDay => _es ? 'Todos los días' : 'Every day';
-  String everyXDays(int n) =>
-      _es ? 'Cada $n día${n == 1 ? '' : 's'}' : 'Every $n day${n == 1 ? '' : 's'}';
-  String everyXHours(int n) =>
-      _es ? 'Cada $n hora${n == 1 ? '' : 's'}' : 'Every $n hour${n == 1 ? '' : 's'}';
+  String everyXDays(int n) => _es
+      ? 'Cada $n día${n == 1 ? '' : 's'}'
+      : 'Every $n day${n == 1 ? '' : 's'}';
+  String everyXHours(int n) => _es
+      ? 'Cada $n hora${n == 1 ? '' : 's'}'
+      : 'Every $n hour${n == 1 ? '' : 's'}';
   String everyXMonths(int n) => _es
       ? 'Cada $n mes${n == 1 ? '' : 'es'}'
       : 'Every $n month${n == 1 ? '' : 's'}';
@@ -242,20 +244,20 @@ class S {
   String get everyXHoursOption => _es ? 'Cada X horas' : 'Every X hours';
   String get everyXDaysOption => _es ? 'Cada X días' : 'Every X days';
   String get everyXMonthsOption => _es ? 'Cada X meses' : 'Every X months';
-  String get weekdaysOption => _es
-      ? 'Días específicos de la semana'
-      : 'Specific days of the week';
+  String get weekdaysOption =>
+      _es ? 'Días específicos de la semana' : 'Specific days of the week';
   String get cyclicOption => _es ? 'Modo cíclico' : 'Cyclic mode';
   String get onDemandOption => _es ? 'A demanda' : 'On demand';
   String get remindEvery => _es ? 'Recordar cada' : 'Remind every';
   String get firstIntakeTime =>
       _es ? 'Hora de la primera toma' : 'First intake time';
   String get confirm => _es ? 'Confirmar' : 'Confirm';
-  String get daysOnLabel =>
-      _es ? 'Días de tratamiento' : 'Treatment days (on)';
+  String get daysOnLabel => _es ? 'Días de tratamiento' : 'Treatment days (on)';
   String get daysOffLabel => _es ? 'Días de descanso' : 'Rest days (off)';
   String get selectAtLeastOneDay =>
       _es ? 'Selecciona al menos un día' : 'Select at least one day';
+  String get selectAtLeastOnePet =>
+      _es ? 'Selecciona al menos una mascota' : 'Select at least one pet';
 
   /// "Select interval in hours/days/months"
   String selectIntervalIn(IntervalUnit unit) {
@@ -320,21 +322,18 @@ class S {
     return '${frequencyLabel(t)} · $times';
   }
 
-  String get intervalDaysLabel =>
-      _es ? 'Intervalo (días)' : 'Interval (days)';
+  String get intervalDaysLabel => _es ? 'Intervalo (días)' : 'Interval (days)';
   String get timesOfDay => _es ? 'Horarios' : 'Times';
   String get addTime => _es ? 'Agregar horario' : 'Add time';
-  String get atLeastOneTime => _es
-      ? 'Agrega al menos un horario'
-      : 'Add at least one time';
+  String get atLeastOneTime =>
+      _es ? 'Agrega al menos un horario' : 'Add at least one time';
   String get startDate => _es ? 'Fecha de inicio' : 'Start date';
   String get endDate => _es ? 'Fecha de fin (opcional)' : 'End date (optional)';
   String get noEndDate => _es ? 'Sin fecha de fin' : 'No end date';
   String get active => _es ? 'Activo' : 'Active';
 
   String get markGiven => _es ? 'Dosis aplicada' : 'Dose given';
-  String get unmarkGiven =>
-      _es ? 'Desmarcar dosis' : 'Unmark dose';
+  String get unmarkGiven => _es ? 'Desmarcar dosis' : 'Unmark dose';
   String doseGivenSnack(String med) =>
       _es ? 'Dosis de $med registrada' : 'Dose of $med logged';
   String get history => _es ? 'Historial' : 'History';
@@ -363,8 +362,7 @@ class S {
   String get weightHistory => _es ? 'Historial de peso' : 'Weight history';
   String get noWeightEntries =>
       _es ? 'Aún no hay registros de peso.' : 'No weight entries yet.';
-  String get deleteWeightEntry =>
-      _es ? 'Eliminar registro' : 'Delete entry';
+  String get deleteWeightEntry => _es ? 'Eliminar registro' : 'Delete entry';
   String get deleteWeightEntryConfirm =>
       _es ? '¿Eliminar este registro de peso?' : 'Delete this weight entry?';
   String get invalidNumber => _es ? 'Número inválido' : 'Invalid number';
@@ -376,6 +374,17 @@ class S {
   String get homeTab => _es ? 'Inicio' : 'Home';
   String get petsTab => _es ? 'Mascotas' : 'Pets';
   String get treatmentsTab => _es ? 'Tratamientos' : 'Treatments';
+  String get progressTab => _es ? 'Progreso' : 'Progress';
+  String get settingsTab => _es ? 'Ajustes' : 'Settings';
+
+  // Settings.
+  String get language => _es ? 'Idioma' : 'Language';
+  String get theme => _es ? 'Tema' : 'Theme';
+  String get systemDefault => _es ? 'Sistema' : 'System';
+  String get lightTheme => _es ? 'Claro' : 'Light';
+  String get darkTheme => _es ? 'Oscuro' : 'Dark';
+  String get spanish => 'Español';
+  String get english => 'English';
   String get today => _es ? 'Hoy' : 'Today';
   String get noTreatmentsToday => _es
       ? 'No hay tratamientos programados para hoy.'
@@ -398,6 +407,12 @@ class S {
   String get editTreatment => _es ? 'Editar tratamiento' : 'Edit treatment';
   String get deleteTreatment =>
       _es ? 'Eliminar tratamiento' : 'Delete treatment';
+  String nTreatments(int n) => _es
+      ? '$n tratamiento${n == 1 ? '' : 's'}'
+      : '$n treatment${n == 1 ? '' : 's'}';
+  String nActiveTreatments(int n) => _es
+      ? '$n tratamiento${n == 1 ? '' : 's'} activo${n == 1 ? '' : 's'}'
+      : '$n active treatment${n == 1 ? '' : 's'}';
   String get deleteTreatmentConfirm => _es
       ? '¿Eliminar este tratamiento y sus recordatorios?'
       : 'Delete this treatment and its reminders?';
@@ -422,9 +437,8 @@ class S {
       _es ? 'Fecha de aplicación' : 'Application date';
   String get reminderLabel => _es ? 'Recordatorio' : 'Reminder';
   String get noReminder => _es ? 'Sin recordatorio' : 'No reminder';
-  String get noVaccinations => _es
-      ? 'Aún no hay vacunas registradas.'
-      : 'No vaccinations recorded yet.';
+  String get noVaccinations =>
+      _es ? 'Aún no hay vacunas registradas.' : 'No vaccinations recorded yet.';
   String get deleteVaccination =>
       _es ? 'Eliminar vacuna' : 'Delete vaccination';
   String get deleteVaccinationConfirm => _es
@@ -463,16 +477,14 @@ class S {
   String nextDose(String date) =>
       _es ? 'Próxima dosis: $date' : 'Next dose: $date';
 
-  String vaccineReminderTitle(String petName) => _es
-      ? 'Vacuna para $petName'
-      : 'Vaccination for $petName';
+  String vaccineReminderTitle(String petName) =>
+      _es ? 'Vacuna para $petName' : 'Vaccination for $petName';
   String vaccineReminderBody(String vaccineType) => _es
       ? 'Es hora de renovar la vacuna: $vaccineType'
       : 'Time to renew the vaccine: $vaccineType';
 
-  String reminderTitle(String petName) => _es
-      ? 'Medicamento para $petName'
-      : 'Medication for $petName';
+  String reminderTitle(String petName) =>
+      _es ? 'Medicamento para $petName' : 'Medication for $petName';
   String reminderBody(String medName, String dosage) =>
       _es ? 'Es hora de: $medName ($dosage)' : 'Time for: $medName ($dosage)';
 }
@@ -481,8 +493,7 @@ class _SDelegate extends LocalizationsDelegate<S> {
   const _SDelegate();
 
   @override
-  bool isSupported(Locale locale) =>
-      ['en', 'es'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => ['en', 'es'].contains(locale.languageCode);
 
   @override
   Future<S> load(Locale locale) async => S(locale);

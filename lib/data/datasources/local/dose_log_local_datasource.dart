@@ -6,7 +6,7 @@ class DoseLogLocalDataSource {
   final DatabaseProvider _provider;
   const DoseLogLocalDataSource(this._provider);
 
-  Future<List<DoseLogModel>> getForPet(int petId, {int limit = 200}) async {
+  Future<List<DoseLogModel>> getForPet(int petId, {int limit = 1000}) async {
     final db = await _provider.database;
     final rows = await db.query('dose_logs',
         where: 'petId = ?',

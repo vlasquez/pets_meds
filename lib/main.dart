@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'domain/entities/app_settings.dart';
 import 'injection.dart';
 import 'l10n/strings.dart';
 import 'presentation/blocs/pets/pets_bloc.dart';
+import 'presentation/blocs/settings/settings_bloc.dart';
 import 'presentation/screens/main_screen.dart';
 
 Future<void> main() async {
@@ -16,29 +18,65 @@ Future<void> main() async {
 class PetMedsApp extends StatelessWidget {
   const PetMedsApp({super.key});
 
+  ThemeMode _themeMode(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.system:
+        return ThemeMode.system;
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => PetsBloc(
-        getPets: sl(),
-        savePet: sl(),
-        deletePet: sl(),
-      )..add(const PetsRequested()),
-      child: MaterialApp(
-        title: 'Pet Meds',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-          useMaterial3: true,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => SettingsBloc(
+            getSettings: sl(),
+            saveSettings: sl(),
+          )..add(const SettingsRequested()),
         ),
-        localizationsDelegates: const [
-          S.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [Locale('en'), Locale('es')],
-        home: const MainScreen(),
+        BlocProvider(
+          create: (_) => PetsBloc(
+            getPets: sl(),
+            savePet: sl(),
+            deletePet: sl(),
+          )..add(const PetsRequested()),
+        ),
+      ],
+      child: BlocBuilder<SettingsBloc, AppSettings>(
+        builder: (context, settings) {
+          return MaterialApp(
+            title: 'Pet Meds',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.teal,
+                brightness: Brightness.dark,
+              ),
+              useMaterial3: true,
+            ),
+            themeMode: _themeMode(settings.themeMode),
+            locale: settings.languageCode == null
+                ? null
+                : Locale(settings.languageCode!),
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('en'), Locale('es')],
+            home: const MainScreen(),
+          );
+        },
       ),
     );
   }

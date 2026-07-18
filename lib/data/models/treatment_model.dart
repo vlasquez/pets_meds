@@ -63,6 +63,16 @@ class TreatmentModel extends Treatment {
     }
   }
 
+  static FrequencyType _frequencyFromName(String? name) {
+    // Legacy value from schemas < v8.
+    if (name == 'intervalDays') return FrequencyType.interval;
+    try {
+      return FrequencyType.values.byName(name ?? 'daily');
+    } on ArgumentError {
+      return FrequencyType.daily;
+    }
+  }
+
   static String encodeTimes(List<ScheduleTime> times) =>
       times.map((t) => t.format()).join(',');
 
@@ -88,8 +98,7 @@ class TreatmentModel extends Treatment {
         medicationName: map['medicationName'] as String? ?? '',
         doseAmount: (map['doseAmount'] as num? ?? 1).toDouble(),
         doseUnit: _doseUnitFromName(map['doseUnit'] as String?),
-        frequencyType:
-            FrequencyType.values.byName(map['frequencyType'] as String),
+        frequencyType: _frequencyFromName(map['frequencyType'] as String?),
         times: decodeTimes(map['times'] as String),
         intervalValue: map['intervalValue'] as int? ?? 8,
         intervalUnit: _intervalUnitFromName(map['intervalUnit'] as String?),

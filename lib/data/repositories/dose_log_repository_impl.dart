@@ -8,7 +8,7 @@ class DoseLogRepositoryImpl implements DoseLogRepository {
   const DoseLogRepositoryImpl(this._local);
 
   @override
-  Future<List<DoseLog>> getDoseLogsForPet(int petId, {int limit = 200}) =>
+  Future<List<DoseLog>> getDoseLogsForPet(int petId, {int limit = 1000}) =>
       _local.getForPet(petId, limit: limit);
 
   @override
