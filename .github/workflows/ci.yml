@@ -1,0 +1,21 @@
+name: CI
+
+# Runs on every pull request (and on pushes to main so the branch
+# always has a known-good status).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
