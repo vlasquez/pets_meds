@@ -90,7 +90,7 @@ class WeightChart extends StatelessWidget {
               reservedSize: 44,
               interval: ySpan / 2,
               getTitlesWidget: (value, meta) => SideTitleWidget(
-                axisSide: meta.axisSide,
+                meta: meta,
                 child: Text(value.toStringAsFixed(1), style: labelStyle),
               ),
             ),
@@ -105,7 +105,7 @@ class WeightChart extends StatelessWidget {
               getTitlesWidget: (value, meta) {
                 final d = DateTime.fromMillisecondsSinceEpoch(value.toInt());
                 return SideTitleWidget(
-                  axisSide: meta.axisSide,
+                  meta: meta,
                   child: Text(_fmtShortDate(d), style: labelStyle),
                 );
               },

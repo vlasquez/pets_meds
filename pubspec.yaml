@@ -11,25 +11,25 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_bloc: ^8.1.6
+  flutter_bloc: ^9.1.1
   equatable: ^2.0.5
-  get_it: ^7.7.0
+  get_it: ^9.2.1
   sqflite: ^2.3.3
   path: ^1.9.0
-  flutter_local_notifications: ^17.2.2
-  timezone: ^0.9.4
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
   image_picker: ^1.1.2
   path_provider: ^2.1.4
   shared_preferences: ^2.3.2
-  package_info_plus: ^8.0.2
-  fl_chart: ^0.68.0
+  package_info_plus: ^9.0.1
+  fl_chart: ^0.71.0
   intl: any
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 # Launcher icons: run `dart run flutter_launcher_icons` after changing
 # assets/icon/*.
