@@ -36,13 +36,21 @@ jobs:
           channel: stable
           cache: true
 
-      # Recreate the upload keystore from secrets.
+      # Recreate the upload keystore from secrets. Pass the base64 via
+      # env (not string interpolation) and decode tolerantly so any
+      # line wrapping in the secret can't corrupt the .jks.
       - name: Set up signing
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > android/upload-keystore.jks
+          # Fail early with a clear message if the keystore is unreadable.
+          keytool -list -keystore android/upload-keystore.jks \
+            -storepass "$KEYSTORE_PASSWORD" >/dev/null
           cat > android/key.properties <<EOF
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEYSTORE_PASSWORD
           keyAlias=upload
           storeFile=../upload-keystore.jks
           EOF
