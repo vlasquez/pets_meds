@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../domain/entities/app_settings.dart';
 import '../../l10n/strings.dart';
 import '../blocs/settings/settings_bloc.dart';
+
+const _contactEmail = 'andresvelasquezp92@gmail.com';
+// Note: keep in sync with docs/index.html (privacy policy).
 
 /// Settings tab: language and theme.
 /// Expects a [SettingsBloc] to be provided above it (app level).
@@ -82,6 +86,37 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showAbout(BuildContext context) async {
+    final s = S.of(context);
+    final info = await PackageInfo.fromPlatform();
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.about),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pet Meds — 101 Labs',
+                style: Theme.of(ctx).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Text('${s.versionLabel}: ${info.version} (${info.buildNumber})'),
+            const SizedBox(height: 8),
+            Text('${s.contactLabel}:'),
+            const SelectableText(_contactEmail),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -102,6 +137,11 @@ class SettingsScreen extends StatelessWidget {
                 title: Text(s.theme),
                 subtitle: Text(_themeLabel(s, settings.themeMode)),
                 onTap: () => _pickTheme(context, settings),
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: Text(s.about),
+                onTap: () => _showAbout(context),
               ),
             ],
           );

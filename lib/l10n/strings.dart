@@ -385,6 +385,9 @@ class S {
   String get darkTheme => _es ? 'Oscuro' : 'Dark';
   String get spanish => 'Español';
   String get english => 'English';
+  String get about => _es ? 'Acerca de' : 'About';
+  String get versionLabel => _es ? 'Versión' : 'Version';
+  String get contactLabel => _es ? 'Contacto' : 'Contact';
   String get today => _es ? 'Hoy' : 'Today';
   String get noTreatmentsToday => _es
       ? 'No hay tratamientos programados para hoy.'
@@ -410,6 +413,9 @@ class S {
   String nTreatments(int n) => _es
       ? '$n tratamiento${n == 1 ? '' : 's'}'
       : '$n treatment${n == 1 ? '' : 's'}';
+  String get noActiveTreatments => _es
+      ? 'Aún no hay tratamientos activos.'
+      : 'No active treatments yet.';
   String nActiveTreatments(int n) => _es
       ? '$n tratamiento${n == 1 ? '' : 's'} activo${n == 1 ? '' : 's'}'
       : '$n active treatment${n == 1 ? '' : 's'}';

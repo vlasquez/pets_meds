@@ -48,7 +48,7 @@ class ProgressScreen extends StatelessWidget {
             case ProgressStatus.success:
               final groups = _groupByPet(state);
               if (groups.isEmpty) {
-                return EmptyState(message: s.noTreatments);
+                return EmptyState(message: s.noActiveTreatments);
               }
               return ListView(
                 padding: const EdgeInsets.only(bottom: 24),

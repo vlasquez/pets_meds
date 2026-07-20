@@ -63,8 +63,6 @@ class NotificationDataSource {
       await _plugin.zonedSchedule(
         _notificationId(treatment.id!, slot++), title, body, when, _details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: match,
       );
     }
@@ -74,8 +72,6 @@ class NotificationDataSource {
       await _plugin.zonedSchedule(
         _notificationId(treatment.id!, slot++), title, body, when, _details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
       );
     }
 
@@ -143,8 +139,6 @@ class NotificationDataSource {
       when,
       _details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
