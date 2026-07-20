@@ -61,11 +61,11 @@ class WeightChart extends StatelessWidget {
           horizontalInterval: ySpan / 2,
           verticalInterval: xSpan / 3,
           getDrawingHorizontalLine: (_) => FlLine(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
             strokeWidth: 1,
           ),
           getDrawingVerticalLine: (_) => FlLine(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
             strokeWidth: 1,
             dashArray: [4, 4],
           ),
@@ -149,7 +149,10 @@ class WeightChart extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withOpacity(0.25), color.withOpacity(0.02)],
+                colors: [
+                  color.withValues(alpha: 0.25),
+                  color.withValues(alpha: 0.02)
+                ],
               ),
             ),
           ),
