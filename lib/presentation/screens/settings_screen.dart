@@ -7,6 +7,7 @@ import '../../l10n/strings.dart';
 import '../blocs/settings/settings_bloc.dart';
 
 const _contactEmail = 'andresvelasquezp92@gmail.com';
+// Note: keep in sync with docs/index.html (privacy policy).
 
 /// Settings tab: language and theme.
 /// Expects a [SettingsBloc] to be provided above it (app level).
