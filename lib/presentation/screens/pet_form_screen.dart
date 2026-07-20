@@ -182,7 +182,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _species,
+              initialValue: _species,
               decoration: InputDecoration(labelText: s.species),
               items: [
                 DropdownMenuItem(value: 'dog', child: Text(s.dog)),
@@ -277,7 +277,7 @@ class _BreedDropdown extends StatelessWidget {
         options.any((o) => o.$1 == breed) ? breed : null;
 
     return DropdownButtonFormField<String?>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(labelText: s.breedLabel),
       items: [
         DropdownMenuItem<String?>(value: null, child: Text(s.notSet)),

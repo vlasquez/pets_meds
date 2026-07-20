@@ -36,8 +36,8 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.the101labs.petmeds"
     // Pinned to satisfy Play's target API requirement (>= 35).
-    compileSdk = 35
-    ndkVersion = "25.1.8937393"
+    compileSdk = 36
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         // Required by flutter_local_notifications
@@ -89,5 +89,5 @@ flutter {
 
 dependencies {
     // Required by flutter_local_notifications
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
 }
