@@ -44,17 +44,24 @@ class SettingsScreen extends StatelessWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(s.language),
         children: [
-          for (final choice in const [
-            _LanguageChoice(null),
-            _LanguageChoice('es'),
-            _LanguageChoice('en'),
-          ])
-            RadioListTile<_LanguageChoice>(
-              value: choice,
-              groupValue: _LanguageChoice(settings.languageCode),
-              title: Text(_languageLabel(s, choice.code)),
-              onChanged: (v) => Navigator.of(ctx).pop(v),
+          RadioGroup<_LanguageChoice>(
+            groupValue: _LanguageChoice(settings.languageCode),
+            onChanged: (v) => Navigator.of(ctx).pop(v),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final choice in const [
+                  _LanguageChoice(null),
+                  _LanguageChoice('es'),
+                  _LanguageChoice('en'),
+                ])
+                  RadioListTile<_LanguageChoice>(
+                    value: choice,
+                    title: Text(_languageLabel(s, choice.code)),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -71,13 +78,20 @@ class SettingsScreen extends StatelessWidget {
       builder: (ctx) => SimpleDialog(
         title: Text(s.theme),
         children: [
-          for (final mode in AppThemeMode.values)
-            RadioListTile<AppThemeMode>(
-              value: mode,
-              groupValue: settings.themeMode,
-              title: Text(_themeLabel(s, mode)),
-              onChanged: (v) => Navigator.of(ctx).pop(v),
+          RadioGroup<AppThemeMode>(
+            groupValue: settings.themeMode,
+            onChanged: (v) => Navigator.of(ctx).pop(v),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final mode in AppThemeMode.values)
+                  RadioListTile<AppThemeMode>(
+                    value: mode,
+                    title: Text(_themeLabel(s, mode)),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );

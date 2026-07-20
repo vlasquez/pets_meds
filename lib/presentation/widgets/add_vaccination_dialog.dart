@@ -135,7 +135,7 @@ class _AddVaccinationDialogState extends State<_AddVaccinationDialog> {
                     Expanded(
                       flex: 3,
                       child: DropdownButtonFormField<ReminderUnit>(
-                        value: _reminderUnit,
+                        initialValue: _reminderUnit,
                         decoration:
                             InputDecoration(labelText: s.frequency),
                         items: [

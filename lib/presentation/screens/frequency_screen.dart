@@ -84,7 +84,7 @@ class _FrequencyScreenState extends State<FrequencyScreen> {
         builder: (ctx, setDialogState) => AlertDialog(
           title: Text(s.selectIntervalIn(_intervalUnit)),
           content: DropdownButtonFormField<int>(
-            value: selected,
+            initialValue: selected,
             items: [
               for (var i = 1; i <= _maxIntervalValue; i++)
                 DropdownMenuItem(value: i, child: Text('$i')),
@@ -118,7 +118,7 @@ class _FrequencyScreenState extends State<FrequencyScreen> {
         builder: (ctx, setDialogState) => AlertDialog(
           title: Text(on ? s.daysOnLabel : s.daysOffLabel),
           content: DropdownButtonFormField<int>(
-            value: selected,
+            initialValue: selected,
             items: [
               for (var i = 1; i <= 60; i++)
                 DropdownMenuItem(value: i, child: Text('$i')),
@@ -176,11 +176,13 @@ class _FrequencyScreenState extends State<FrequencyScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Column(
         children: [
-          RadioListTile<FrequencyType>(
-            value: type,
+          RadioGroup<FrequencyType>(
             groupValue: _type,
-            title: Text(title),
             onChanged: (v) => setState(() => _type = v ?? _type),
+            child: RadioListTile<FrequencyType>(
+              value: type,
+              title: Text(title),
+            ),
           ),
           // The card expands with its options when selected.
           if (selected && expanded != null)
@@ -197,15 +199,22 @@ class _FrequencyScreenState extends State<FrequencyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final unit in IntervalUnit.values)
-          RadioListTile<IntervalUnit>(
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            value: unit,
-            groupValue: _intervalUnit,
-            title: Text(_unitOptionLabel(s, unit)),
-            onChanged: (v) => _selectUnit(v ?? _intervalUnit),
+        RadioGroup<IntervalUnit>(
+          groupValue: _intervalUnit,
+          onChanged: (v) => _selectUnit(v ?? _intervalUnit),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final unit in IntervalUnit.values)
+                RadioListTile<IntervalUnit>(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: unit,
+                  title: Text(_unitOptionLabel(s, unit)),
+                ),
+            ],
           ),
+        ),
         const SizedBox(height: 4),
         Row(
           children: [

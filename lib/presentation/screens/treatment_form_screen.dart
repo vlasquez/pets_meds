@@ -298,7 +298,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<int>(
-                    value: _medicationId,
+                    initialValue: _medicationId,
                     decoration:
                         InputDecoration(labelText: s.medicationLabel),
                     hint: Text(_loadingMedications
@@ -346,7 +346,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                 Expanded(
                   flex: 3,
                   child: DropdownButtonFormField<DoseUnit>(
-                    value: _doseUnit,
+                    initialValue: _doseUnit,
                     decoration: InputDecoration(labelText: s.doseUnitLabel),
                     items: () {
                       final units = List.of(DoseUnit.values)
