@@ -1,7 +1,7 @@
 name: pet_meds
 description: Pet medication reminders - track and get notified about your pets' meds.
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+4
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
