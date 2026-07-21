@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/pet.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import 'pet_avatar.dart';
 
 /// List tile for a pet with its photo (or species silhouette),

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../domain/entities/app_settings.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/settings/settings_bloc.dart';
 
 const _contactEmail = 'andresvelasquezp92@gmail.com';
@@ -100,6 +100,48 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  String _hourFormatLabel(S s, HourFormat f) {
+    switch (f) {
+      case HourFormat.system:
+        return s.systemDefault;
+      case HourFormat.h24:
+        return s.hourFormat24;
+      case HourFormat.h12:
+        return s.hourFormat12;
+    }
+  }
+
+  Future<void> _pickHourFormat(
+      BuildContext context, AppSettings settings) async {
+    final s = S.of(context);
+    final bloc = context.read<SettingsBloc>();
+    final selected = await showDialog<HourFormat>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(s.hourFormat),
+        children: [
+          RadioGroup<HourFormat>(
+            groupValue: settings.hourFormat,
+            onChanged: (v) => Navigator.of(ctx).pop(v),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final f in HourFormat.values)
+                  RadioListTile<HourFormat>(
+                    value: f,
+                    title: Text(_hourFormatLabel(s, f)),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    if (selected != null) {
+      bloc.add(HourFormatChanged(selected));
+    }
+  }
+
   Future<void> _showAbout(BuildContext context) async {
     final s = S.of(context);
     final info = await PackageInfo.fromPlatform();
@@ -151,6 +193,12 @@ class SettingsScreen extends StatelessWidget {
                 title: Text(s.theme),
                 subtitle: Text(_themeLabel(s, settings.themeMode)),
                 onTap: () => _pickTheme(context, settings),
+              ),
+              ListTile(
+                leading: const Icon(Icons.schedule),
+                title: Text(s.hourFormat),
+                subtitle: Text(_hourFormatLabel(s, settings.hourFormat)),
+                onTap: () => _pickHourFormat(context, settings),
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline),

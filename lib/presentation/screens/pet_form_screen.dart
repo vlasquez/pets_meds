@@ -8,7 +8,7 @@ import '../../data/datasources/local/photo_storage.dart';
 import '../../domain/entities/breed.dart';
 import '../../domain/entities/pet.dart';
 import '../../injection.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/pets/pets_bloc.dart';
 
 class PetFormScreen extends StatefulWidget {
@@ -155,10 +155,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
                   children: [
                     CircleAvatar(
                       radius: 48,
-                      backgroundImage: _photoPath != null &&
-                              File(_photoPath!).existsSync()
-                          ? FileImage(File(_photoPath!))
-                          : null,
+                      backgroundImage:
+                          _photoPath != null && File(_photoPath!).existsSync()
+                              ? FileImage(File(_photoPath!))
+                              : null,
                       child: _photoPath == null
                           ? const Icon(Icons.pets, size: 40)
                           : null,
@@ -254,8 +254,10 @@ class _BreedDropdown extends StatelessWidget {
       final sorted = DogBreed.values
           .where((b) => b != DogBreed.mixed && b != DogBreed.other)
           .toList()
-        ..sort((a, b) =>
-            s.dogBreedName(a).toLowerCase().compareTo(s.dogBreedName(b).toLowerCase()));
+        ..sort((a, b) => s
+            .dogBreedName(a)
+            .toLowerCase()
+            .compareTo(s.dogBreedName(b).toLowerCase()));
       options = [
         for (final b in [...sorted, DogBreed.mixed, DogBreed.other])
           (b.name, s.dogBreedName(b)),
@@ -264,8 +266,10 @@ class _BreedDropdown extends StatelessWidget {
       final sorted = CatBreed.values
           .where((b) => b != CatBreed.mixed && b != CatBreed.other)
           .toList()
-        ..sort((a, b) =>
-            s.catBreedName(a).toLowerCase().compareTo(s.catBreedName(b).toLowerCase()));
+        ..sort((a, b) => s
+            .catBreedName(a)
+            .toLowerCase()
+            .compareTo(s.catBreedName(b).toLowerCase()));
       options = [
         for (final b in [...sorted, CatBreed.mixed, CatBreed.other])
           (b.name, s.catBreedName(b)),
@@ -273,8 +277,7 @@ class _BreedDropdown extends StatelessWidget {
     }
 
     // Guard against a stale value after a species switch.
-    final value =
-        options.any((o) => o.$1 == breed) ? breed : null;
+    final value = options.any((o) => o.$1 == breed) ? breed : null;
 
     return DropdownButtonFormField<String?>(
       initialValue: value,

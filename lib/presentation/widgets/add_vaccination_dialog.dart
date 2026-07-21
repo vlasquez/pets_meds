@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/vaccination.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/vaccinations/vaccinations_bloc.dart';
 
 /// Dialog to register a vaccination: type, application date and an
@@ -136,14 +136,12 @@ class _AddVaccinationDialogState extends State<_AddVaccinationDialog> {
                       flex: 3,
                       child: DropdownButtonFormField<ReminderUnit>(
                         initialValue: _reminderUnit,
-                        decoration:
-                            InputDecoration(labelText: s.frequency),
+                        decoration: InputDecoration(labelText: s.frequency),
                         items: [
                           for (final u in ReminderUnit.values)
                             DropdownMenuItem(
                               value: u,
-                              child:
-                                  Text(s.reminderUnitName(u, reminderValue)),
+                              child: Text(s.reminderUnitName(u, reminderValue)),
                             ),
                         ],
                         onChanged: (v) => setState(

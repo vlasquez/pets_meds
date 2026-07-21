@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/treatment.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 
 /// Result of the frequency screen: the chosen mode and its parameters.
 class FrequencyConfig {
@@ -218,8 +218,7 @@ class _FrequencyScreenState extends State<FrequencyScreen> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Text(s.remindEvery,
-                style: Theme.of(context).textTheme.bodyLarge),
+            Text(s.remindEvery, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(width: 8),
             ActionChip(
               label: Text(

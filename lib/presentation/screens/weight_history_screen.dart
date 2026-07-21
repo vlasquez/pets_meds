@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/pet.dart';
 import '../../domain/entities/weight_entry.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/weight/weight_bloc.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
@@ -82,8 +82,8 @@ class WeightHistoryScreen extends StatelessWidget {
       floatingActionButton: Builder(
         builder: (context) => FloatingActionButton(
           tooltip: s.logWeight,
-          onPressed: () => showLogWeightDialog(context,
-              bloc: context.read<WeightBloc>()),
+          onPressed: () =>
+              showLogWeightDialog(context, bloc: context.read<WeightBloc>()),
           child: const Icon(Icons.add),
         ),
       ),

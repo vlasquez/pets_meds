@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/weight_entry.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 
 /// Line chart of weight over time with labeled axes:
 /// x = date, y = weight in kg. Expects entries most-recent-first.
@@ -136,8 +136,7 @@ class WeightChart extends StatelessWidget {
             barWidth: 3,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, percent, bar, index) =>
-                  FlDotCirclePainter(
+              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
                 radius: 4,
                 color: theme.colorScheme.surface,
                 strokeWidth: 2.5,

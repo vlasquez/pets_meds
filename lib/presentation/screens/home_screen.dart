@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
+import '../../utils/time_format.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import '../widgets/empty_state.dart';
@@ -23,7 +24,8 @@ class HomeScreen extends StatelessWidget {
         listenWhen: (prev, curr) => curr.doseLogCount > prev.doseLogCount,
         listener: (context, state) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(s.doseGivenSnack(state.lastDosedName ?? ''))),
+            SnackBar(
+                content: Text(s.doseGivenSnack(state.lastDosedName ?? ''))),
           );
         },
         child: BlocBuilder<TodayBloc, TodayState>(
@@ -142,17 +144,15 @@ class _TodayTreatmentTileState extends State<_TodayTreatmentTile> {
             title: Text(
                 '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
             subtitle: Text(
-                '${s.scheduleLabel(t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
+                '${s.scheduleLabel(context, t)}\n${s.remainingDaysLabel(t.remainingDays(DateTime.now()))}'),
             isThreeLine: true,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (item.completed)
-                  Icon(Icons.check_circle,
-                      color: theme.colorScheme.primary),
+                  Icon(Icons.check_circle, color: theme.colorScheme.primary),
                 IconButton(
-                  icon: Icon(
-                      _expanded ? Icons.expand_less : Icons.expand_more),
+                  icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
                   onPressed: () => setState(() => _expanded = !_expanded),
                 ),
               ],
@@ -198,7 +198,8 @@ class _TodayTreatmentTileState extends State<_TodayTreatmentTile> {
                             for (var i = 0; i < item.targetCount; i++)
                               IntakeChip(
                                 label: i < item.intakeTimes.length
-                                    ? item.intakeTimes[i].format()
+                                    ? formatScheduleTime(
+                                        context, item.intakeTimes[i])
                                     : '#${i + 1}',
                                 taken: i < item.givenCount,
                                 onTap: i < item.givenCount

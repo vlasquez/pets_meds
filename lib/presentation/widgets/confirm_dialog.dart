@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 
 /// Shows a localized confirm dialog; resolves to true when confirmed.
 Future<bool> showConfirmDialog(

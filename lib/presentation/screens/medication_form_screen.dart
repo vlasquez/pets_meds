@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/medication.dart';
 import '../../domain/usecases/save_medication.dart';
 import '../../injection.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 
 /// Form to create (or edit) a catalog medication.
 /// Pops with the saved [Medication] so callers (e.g. the treatment form)
@@ -53,9 +53,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     final s = S.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.medication == null
-            ? s.newMedication
-            : s.editMedication),
+        title: Text(
+            widget.medication == null ? s.newMedication : s.editMedication),
       ),
       body: Form(
         key: _formKey,

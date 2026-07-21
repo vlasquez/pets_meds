@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/pet.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
+import '../../utils/time_format.dart';
 import '../blocs/progress/progress_bloc.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/intake_chip.dart';
@@ -23,11 +24,11 @@ class ProgressScreen extends StatelessWidget {
       group.$2.add(e);
     }
     final groups = byPetId.values.toList()
-      ..sort((a, b) =>
-          a.$1.name.toLowerCase().compareTo(b.$1.name.toLowerCase()));
+      ..sort(
+          (a, b) => a.$1.name.toLowerCase().compareTo(b.$1.name.toLowerCase()));
     for (final group in groups) {
-      group.$2.sort((a, b) =>
-          a.treatment.startDate.compareTo(b.treatment.startDate));
+      group.$2.sort(
+          (a, b) => a.treatment.startDate.compareTo(b.treatment.startDate));
     }
     return groups;
   }
@@ -74,8 +75,7 @@ class _PetProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final theme = Theme.of(context);
-    final expectedTotal =
-        entries.fold(0, (sum, e) => sum + e.expectedTotal);
+    final expectedTotal = entries.fold(0, (sum, e) => sum + e.expectedTotal);
     final givenTotal = entries.fold(0, (sum, e) => sum + e.givenTotal);
     final progress =
         expectedTotal == 0 ? 0.0 : (givenTotal / expectedTotal).clamp(0.0, 1.0);
@@ -227,9 +227,10 @@ class _DayRow extends StatelessWidget {
               children: [
                 for (var i = 0; i < day.expected; i++)
                   IntakeChip(
-                    label: i < intakes.length
-                        ? intakes[i].format()
-                        : '#${i + 1}',
+                    label:
+                        i < intakes.length
+                            ? formatScheduleTime(context, intakes[i])
+                            : '#${i + 1}',
                     taken: i < day.given,
                     onTap: i < day.given
                         ? () => _uncheck(context)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/treatment.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 
 /// Card showing a treatment with its schedule and an actions menu.
 class TreatmentCard extends StatelessWidget {
@@ -33,7 +33,7 @@ class TreatmentCard extends StatelessWidget {
         title: Text(
             '${treatment.medicationName} · ${s.formatDose(treatment.doseAmount, treatment.doseUnit)}'),
         subtitle: Text(
-            '${s.scheduleLabel(treatment)}\n${s.remainingDaysLabel(treatment.remainingDays(DateTime.now()))}'),
+            '${s.scheduleLabel(context, treatment)}\n${s.remainingDaysLabel(treatment.remainingDays(DateTime.now()))}'),
         isThreeLine: true,
         trailing: PopupMenuButton<String>(
           onSelected: (value) {
