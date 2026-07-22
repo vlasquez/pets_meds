@@ -1,12 +1,65 @@
 name: Release
 
-# Runs on version tags (v1.0.0, v1.1.0, ...) or manually.
+# Manual release. Pick how to bump the version:
+#   patch: 1.0.0 -> 1.0.1   (bug-fix release)
+#   minor: 1.0.0 -> 1.1.0   (new features)
+#   major: 1.0.0 -> 2.0.0   (breaking changes)
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      upload_to_play:
+        description: "Upload to Google Play (internal). Off for the very first
+          release — upload that .aab manually once first."
+        type: boolean
+        default: true
 
 jobs:
+  # Compute the next version, update pubspec, commit and tag.
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bump version
+        id: bump
+        run: |
+          current=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | cut -d+ -f1)
+          IFS=. read -r MAJOR MINOR PATCH <<< "$current"
+          case "${{ inputs.bump }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          NEW="$MAJOR.$MINOR.$PATCH"
+          echo "version=$NEW" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NEW" >> "$GITHUB_OUTPUT"
+          echo "Bumping $current -> $NEW (${{ inputs.bump }})"
+
+          # versionName + build number (run_number keeps versionCode rising).
+          sed -i "s/^version: .*/version: $NEW+${{ github.run_number }}/" pubspec.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git commit -m "Release v$NEW"
+          git tag "v$NEW"
+          # Push the version commit (best-effort; a protected branch may
+          # reject it) and the tag (used by the GitHub Release).
+          git push origin "HEAD:${{ github.ref_name }}" || \
+            echo "::warning::Could not push version commit (branch protection?). Tag still created."
+          git push origin "v$NEW"
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -20,13 +73,14 @@ jobs:
       - run: flutter test
 
   android:
-    needs: test
+    needs: [version, test]
     runs-on: ubuntu-latest
-    # Allow the job to create GitHub Releases.
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -51,7 +105,6 @@ jobs:
             exit 1
           fi
           printf '%s' "$KEYSTORE_B64" | base64 --decode > android/upload-keystore.jks
-          # Fail early with a clear message if the keystore is unreadable.
           if ! keytool -list -keystore android/upload-keystore.jks \
               -storepass "$KEYSTORE_PASSWORD" >/dev/null 2>&1; then
             echo "::error::Keystore unreadable — check ANDROID_KEYSTORE_BASE64"
@@ -66,12 +119,16 @@ jobs:
           EOF
 
       - run: flutter pub get
-      # run_number guarantees a strictly increasing versionCode.
-      - run: flutter build appbundle --release --build-number=${{ github.run_number }}
-
-      # Also build an APK for direct download from the GitHub Release
-      # (an .aab can't be installed directly on a device).
-      - run: flutter build apk --release --build-number=${{ github.run_number }}
+      # Explicit build-name from the computed version; run_number is a
+      # strictly increasing versionCode.
+      - run: >-
+          flutter build appbundle --release
+          --build-name=${{ needs.version.outputs.version }}
+          --build-number=${{ github.run_number }}
+      - run: >-
+          flutter build apk --release
+          --build-name=${{ needs.version.outputs.version }}
+          --build-number=${{ github.run_number }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -79,8 +136,10 @@ jobs:
           path: build/app/outputs/bundle/release/app-release.aab
 
       # Uploads to the Play "internal" track. Promote to production
-      # from the Play Console when ready.
+      # from the Play Console when ready. Skipped for the first release
+      # (the first .aab must be uploaded manually via the console).
       - name: Upload to Google Play (internal track)
+        if: ${{ inputs.upload_to_play }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -89,15 +148,12 @@ jobs:
           track: internal
           status: completed
 
-      # Publish a GitHub Release for this tag, with build artifacts
-      # attached. Shows up under the repo's "Releases" section, and the
-      # newest one is highlighted as "Latest".
+      # Publish a GitHub Release for the new tag, with build artifacts.
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.tag }}
           generate_release_notes: true
           files: |
             build/app/outputs/bundle/release/app-release.aab
@@ -106,13 +162,18 @@ jobs:
   # Compile check only (no signing). Turning this into a TestFlight
   # upload needs Apple certs — see docs/RELEASING.md.
   ios-build-check:
-    needs: test
+    needs: [version, test]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.tag }}
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
+      - run: >-
+          flutter build ios --release --no-codesign
+          --build-name=${{ needs.version.outputs.version }}
+          --build-number=${{ github.run_number }}

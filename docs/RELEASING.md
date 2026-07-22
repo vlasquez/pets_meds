@@ -2,19 +2,27 @@
 
 ## How a release works
 
-1. Bump `version:` in `pubspec.yaml` (e.g. `1.0.1+X` — the build number
-   is overridden in CI by the workflow run number).
-2. Commit, then tag and push:
-   ```
-   git tag v1.0.1
-   git push origin main --tags
-   ```
-3. GitHub Actions (`.github/workflows/release.yml`) runs tests, builds
-   the signed Android App Bundle, and uploads it to the **Play internal
-   track**. Promote it to production from the Play Console.
-4. iOS: CI verifies the build compiles. Actual TestFlight uploads are
-   manual for now (`flutter build ipa` + Transporter) — see below to
-   automate.
+Releases are triggered manually and the version bump is automatic:
+
+1. GitHub → **Actions** → **Release** → **Run workflow**.
+2. Pick the **Version bump**:
+   - `patch` → 1.0.0 → 1.0.1 (bug fixes)
+   - `minor` → 1.0.0 → 1.1.0 (new features)
+   - `major` → 1.0.0 → 2.0.0 (breaking changes)
+3. The workflow computes the next version from `pubspec.yaml`, updates
+   it, commits, and tags `vX.Y.Z`. Then it runs tests, builds the signed
+   Android App Bundle (versionName = the new version, versionCode = the
+   run number), uploads it to the **Play internal track**, and publishes
+   a **GitHub Release** with the .aab and .apk attached.
+4. Promote the Play release to production from the Play Console.
+5. iOS: CI verifies the build compiles. TestFlight uploads are manual
+   for now (`flutter build ipa` + Transporter) — see below to automate.
+
+Note: if `main` is a protected branch, the version-bump *commit* may be
+rejected (the tag is still created and the build still uses the correct
+version). To let the bot commit to `main`, allow the
+`github-actions[bot]` actor to bypass the branch rule, or pull the
+version commit locally afterwards.
 
 ## One-time GitHub setup (repo → Settings → Secrets and variables → Actions)
 
