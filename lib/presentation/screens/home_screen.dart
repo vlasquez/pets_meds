@@ -78,8 +78,11 @@ class HomeScreen extends StatelessWidget {
       ),
     );
     if (!context.mounted) return;
-    if (action == 'pet') await _addPet(context);
-    if (action == 'treatment') await _addTreatment(context);
+    if (action == 'pet') {
+      await _addPet(context);
+    } else if (action == 'treatment') {
+      await _addTreatment(context);
+    }
   }
 
   @override
