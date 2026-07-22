@@ -34,30 +34,31 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          current=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | cut -d+ -f1)
-          IFS=. read -r MAJOR MINOR PATCH <<< "$current"
+          # Source of truth is the latest v* tag (falls back to pubspec on
+          # first release). This is independent of whether a version commit
+          # ever lands on a protected branch, so bumps always increment.
+          latest=$(git tag -l 'v*' | sed 's/^v//' | sort -V | tail -n1)
+          if [ -z "$latest" ]; then
+            latest=$(grep '^version:' pubspec.yaml | sed 's/version: *//' | cut -d+ -f1)
+          fi
+          IFS=. read -r MAJOR MINOR PATCH <<< "$latest"
           case "${{ inputs.bump }}" in
             major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
             minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
             patch) PATCH=$((PATCH + 1)) ;;
           esac
           NEW="$MAJOR.$MINOR.$PATCH"
+          if git rev-parse "v$NEW" >/dev/null 2>&1; then
+            echo "::error::Tag v$NEW already exists. Pick a different bump."
+            exit 1
+          fi
           echo "version=$NEW" >> "$GITHUB_OUTPUT"
           echo "tag=v$NEW" >> "$GITHUB_OUTPUT"
-          echo "Bumping $current -> $NEW (${{ inputs.bump }})"
+          echo "Bumping $latest -> $NEW (${{ inputs.bump }})"
 
-          # versionName + build number (run_number keeps versionCode rising).
-          sed -i "s/^version: .*/version: $NEW+${{ github.run_number }}/" pubspec.yaml
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pubspec.yaml
-          git commit -m "Release v$NEW"
+          # Tag the current commit; no branch push, so branch protection
+          # is never involved. The build sets versionName via --build-name.
           git tag "v$NEW"
-          # Push the version commit (best-effort; a protected branch may
-          # reject it) and the tag (used by the GitHub Release).
-          git push origin "HEAD:${{ github.ref_name }}" || \
-            echo "::warning::Could not push version commit (branch protection?). Tag still created."
           git push origin "v$NEW"
 
   test:
