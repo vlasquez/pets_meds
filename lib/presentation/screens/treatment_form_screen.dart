@@ -101,9 +101,10 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   bool get _usesTimes =>
       _frequency.type != FrequencyType.onDemand && !_isHourlyInterval;
 
-  /// Whether multiple times per day make sense (daily/weekdays/cyclic).
+  /// Whether more than one intake time per day makes sense. "Daily" is
+  /// once per day (use an hourly interval for several doses a day);
+  /// weekdays/cyclic may still have multiple times on their active days.
   bool get _multipleTimes =>
-      _frequency.type == FrequencyType.daily ||
       _frequency.type == FrequencyType.weekdays ||
       _frequency.type == FrequencyType.cyclic;
 
@@ -161,6 +162,21 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
     if (picked != null) {
       setState(() {
         _times.add(ScheduleTime(picked.hour, picked.minute));
+        _times.sort();
+      });
+    }
+  }
+
+  /// Edits the time at [index] (tap a chip to change it).
+  Future<void> _editTime(int index) async {
+    final current = _times[index];
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
+    );
+    if (picked != null) {
+      setState(() {
+        _times[index] = ScheduleTime(picked.hour, picked.minute);
         _times.sort();
       });
     }
@@ -399,6 +415,9 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                   for (var i = 0; i < _times.length; i++)
                     InputChip(
                       label: Text(formatScheduleTime(context, _times[i])),
+                      // Tap to change the time; only offer delete when
+                      // there is more than one.
+                      onPressed: () => _editTime(i),
                       onDeleted: _times.length > 1
                           ? () => setState(() => _times.removeAt(i))
                           : null,
