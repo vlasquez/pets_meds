@@ -106,7 +106,14 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
           ],
         ));
       }
-      emit(state.copyWith(status: TodayStatus.success, entries: entries));
+      // Pets with treatments today first; empty ones at the end.
+      // Stable within each group (preserves the pets' name order).
+      final withItems = entries.where((e) => e.items.isNotEmpty);
+      final withoutItems = entries.where((e) => e.items.isEmpty);
+      emit(state.copyWith(
+        status: TodayStatus.success,
+        entries: [...withItems, ...withoutItems],
+      ));
     } catch (e) {
       emit(state.copyWith(status: TodayStatus.failure, error: e.toString()));
     }
