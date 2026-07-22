@@ -1,5 +1,5 @@
-/// Generic model the scheduler understands. Host apps translate their
-/// own domain (treatments, tasks, habits…) into these types.
+// Generic model the scheduler understands. Host apps translate their
+// own domain (treatments, tasks, habits…) into these types.
 
 /// A time of day, 24h.
 class ReminderTime {
