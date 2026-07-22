@@ -12,6 +12,11 @@ on:
         type: choice
         options: [patch, minor, major]
         default: patch
+      upload_to_play:
+        description: "Upload to Google Play (internal). Off for the very first
+          release — upload that .aab manually once first."
+        type: boolean
+        default: true
 
 jobs:
   # Compute the next version, update pubspec, commit and tag.
@@ -131,8 +136,10 @@ jobs:
           path: build/app/outputs/bundle/release/app-release.aab
 
       # Uploads to the Play "internal" track. Promote to production
-      # from the Play Console when ready.
+      # from the Play Console when ready. Skipped for the first release
+      # (the first .aab must be uploaded manually via the console).
       - name: Upload to Google Play (internal track)
+        if: ${{ inputs.upload_to_play }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
