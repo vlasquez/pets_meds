@@ -44,10 +44,20 @@ jobs:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Missing release secrets. Set ANDROID_KEYSTORE_BASE64"
+            echo "::error::and ANDROID_KEYSTORE_PASSWORD in repo Settings →"
+            echo "::error::Secrets and variables → Actions."
+            exit 1
+          fi
           printf '%s' "$KEYSTORE_B64" | base64 --decode > android/upload-keystore.jks
           # Fail early with a clear message if the keystore is unreadable.
-          keytool -list -keystore android/upload-keystore.jks \
-            -storepass "$KEYSTORE_PASSWORD" >/dev/null
+          if ! keytool -list -keystore android/upload-keystore.jks \
+              -storepass "$KEYSTORE_PASSWORD" >/dev/null 2>&1; then
+            echo "::error::Keystore unreadable — check ANDROID_KEYSTORE_BASE64"
+            echo "::error::(no line wrapping) and ANDROID_KEYSTORE_PASSWORD."
+            exit 1
+          fi
           cat > android/key.properties <<EOF
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEYSTORE_PASSWORD
