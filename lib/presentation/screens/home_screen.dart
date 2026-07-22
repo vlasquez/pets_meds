@@ -167,22 +167,15 @@ class _PetCardState extends State<_PetCard> {
         children: [
           ListTile(
             leading: PetAvatar(pet: entry.pet),
-            title: Text(entry.pet.name,
-                style: theme.textTheme.titleMedium),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  tooltip: entry.pet.name,
-                  onPressed: () => _openDetail(context),
-                ),
-                IconButton(
-                  icon:
-                      Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-                  onPressed: () => setState(() => _expanded = !_expanded),
-                ),
-              ],
+            // Tap the name (or avatar) to open the pet's detail screen.
+            title: InkWell(
+              onTap: () => _openDetail(context),
+              child: Text(entry.pet.name,
+                  style: theme.textTheme.titleMedium),
+            ),
+            trailing: IconButton(
+              icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+              onPressed: () => setState(() => _expanded = !_expanded),
             ),
             onTap: () => setState(() => _expanded = !_expanded),
           ),
