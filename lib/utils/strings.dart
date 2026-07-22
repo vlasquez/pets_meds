@@ -4,6 +4,7 @@ import '../domain/entities/breed.dart';
 import '../domain/entities/dose_unit.dart';
 import '../domain/entities/treatment.dart';
 import '../domain/entities/vaccination.dart';
+import 'time_format.dart';
 
 /// Lightweight ES/EN localization without codegen.
 class S {
@@ -315,9 +316,11 @@ class S {
     }
   }
 
-  /// Schedule summary plus times of day (when relevant).
-  String scheduleLabel(Treatment t) {
-    final times = t.times.map((x) => x.format()).join(', ');
+  /// Schedule summary plus times of day (when relevant). Times honor the
+  /// user's 24h / AM-PM preference, so a [BuildContext] is required.
+  String scheduleLabel(BuildContext context, Treatment t) {
+    final times =
+        t.times.map((x) => formatScheduleTime(context, x)).join(', ');
     if (times.isEmpty) return frequencyLabel(t);
     return '${frequencyLabel(t)} · $times';
   }
@@ -383,6 +386,9 @@ class S {
   String get systemDefault => _es ? 'Sistema' : 'System';
   String get lightTheme => _es ? 'Claro' : 'Light';
   String get darkTheme => _es ? 'Oscuro' : 'Dark';
+  String get hourFormat => _es ? 'Formato de hora' : 'Hour format';
+  String get hourFormat24 => _es ? '24 horas' : '24-hour';
+  String get hourFormat12 => _es ? '12 horas (AM/PM)' : '12-hour (AM/PM)';
   String get spanish => 'Español';
   String get english => 'English';
   String get about => _es ? 'Acerca de' : 'About';

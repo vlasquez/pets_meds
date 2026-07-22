@@ -7,7 +7,8 @@ import '../../domain/entities/schedule_time.dart';
 import '../../domain/entities/treatment.dart';
 import '../../domain/usecases/get_medications.dart';
 import '../../injection.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
+import '../../utils/time_format.dart';
 import '../widgets/pet_avatar.dart';
 import 'frequency_screen.dart';
 import 'medication_form_screen.dart';
@@ -126,8 +127,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
 
   Future<void> _openFrequencyScreen() async {
     final result = await Navigator.of(context).push<FrequencyConfig>(
-      MaterialPageRoute(
-          builder: (_) => FrequencyScreen(initial: _frequency)),
+      MaterialPageRoute(builder: (_) => FrequencyScreen(initial: _frequency)),
     );
     if (result != null && mounted) {
       setState(() => _frequency = result);
@@ -173,9 +173,10 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
     );
     if (created != null && mounted) {
       setState(() {
-        _medications = [..._medications, created]
-          ..sort((a, b) =>
-              a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        _medications = [
+          ..._medications,
+          created
+        ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         _medicationId = created.id;
       });
     }
@@ -227,8 +228,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
         petId: pet.id!,
         medicationId: medication.id!,
         medicationName: medication.name,
-        doseAmount:
-            double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 1,
+        doseAmount: double.tryParse(_amountCtrl.text.replaceAll(',', '.')) ?? 1,
         doseUnit: _doseUnit,
         frequencyType: _frequency.type,
         times: times,
@@ -240,8 +240,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
         startDate: _startDate,
         endDate: _endDate,
         active: _active,
-        notes:
-            _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+        notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       );
       widget.onSave(treatment, pet);
     }
@@ -299,11 +298,8 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                 Expanded(
                   child: DropdownButtonFormField<int>(
                     initialValue: _medicationId,
-                    decoration:
-                        InputDecoration(labelText: s.medicationLabel),
-                    hint: Text(_loadingMedications
-                        ? '…'
-                        : s.selectMedication),
+                    decoration: InputDecoration(labelText: s.medicationLabel),
+                    hint: Text(_loadingMedications ? '…' : s.selectMedication),
                     items: [
                       for (final m in _medications)
                         DropdownMenuItem(value: m.id, child: Text(m.name)),
@@ -331,13 +327,11 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                   flex: 2,
                   child: TextFormField(
                     controller: _amountCtrl,
-                    decoration:
-                        InputDecoration(labelText: s.doseAmountLabel),
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
+                    decoration: InputDecoration(labelText: s.doseAmountLabel),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     validator: (v) {
-                      final n =
-                          double.tryParse((v ?? '').replaceAll(',', '.'));
+                      final n = double.tryParse((v ?? '').replaceAll(',', '.'));
                       return (n == null || n <= 0) ? s.invalidNumber : null;
                     },
                   ),
@@ -380,7 +374,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.schedule),
                 title: Text(s.firstIntakeTime),
-                subtitle: Text(_times.first.format()),
+                subtitle: Text(formatScheduleTime(context, _times.first)),
                 onTap: () async {
                   final first = _times.first;
                   final picked = await showTimePicker(
@@ -396,8 +390,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
               ),
             if (_usesTimes) ...[
               const SizedBox(height: 8),
-              Text(s.timesOfDay,
-                  style: Theme.of(context).textTheme.titleSmall),
+              Text(s.timesOfDay, style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -405,7 +398,7 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
                 children: [
                   for (var i = 0; i < _times.length; i++)
                     InputChip(
-                      label: Text(_times[i].format()),
+                      label: Text(formatScheduleTime(context, _times[i])),
                       onDeleted: _times.length > 1
                           ? () => setState(() => _times.removeAt(i))
                           : null,

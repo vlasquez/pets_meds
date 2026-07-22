@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/pet.dart';
 import '../../domain/entities/treatment.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
@@ -65,8 +65,8 @@ class TreatmentsScreen extends StatelessWidget {
     for (final pet in state.pets) {
       final entries = byPetId[pet.id];
       if (entries == null || entries.isEmpty) continue;
-      entries.sort((a, b) =>
-          a.treatment.startDate.compareTo(b.treatment.startDate));
+      entries.sort(
+          (a, b) => a.treatment.startDate.compareTo(b.treatment.startDate));
       groups.add((pet, entries));
     }
     return groups;
@@ -174,8 +174,8 @@ class _TreatmentTile extends StatelessWidget {
             : theme.colorScheme.surfaceContainerHighest,
         child: const Icon(Icons.medication, size: 18),
       ),
-      title:
-          Text('${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
+      title: Text(
+          '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
       subtitle: Text(s.frequencyLabel(t)),
       childrenPadding: const EdgeInsets.fromLTRB(24, 0, 16, 8),
       children: [
@@ -184,7 +184,7 @@ class _TreatmentTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _detailRow(context, Icons.repeat, s.scheduleLabel(t)),
+              _detailRow(context, Icons.repeat, s.scheduleLabel(context, t)),
               _detailRow(context, Icons.calendar_today,
                   '${s.startDate}: ${_fmtDate(t.startDate)}'),
               _detailRow(

@@ -7,8 +7,8 @@ import '../../../domain/usecases/save_settings.dart';
 
 part 'settings_event.dart';
 
-/// App-wide user preferences (theme, language). The state is the
-/// [AppSettings] itself; MaterialApp rebuilds on changes.
+/// App-wide user preferences (theme, language, hour format). The state
+/// is the [AppSettings] itself; MaterialApp rebuilds on changes.
 class SettingsBloc extends Bloc<SettingsEvent, AppSettings> {
   final GetSettings _getSettings;
   final SaveSettings _saveSettings;
@@ -22,6 +22,7 @@ class SettingsBloc extends Bloc<SettingsEvent, AppSettings> {
     on<SettingsRequested>(_onRequested);
     on<ThemeModeChanged>(_onThemeChanged);
     on<LanguageChanged>(_onLanguageChanged);
+    on<HourFormatChanged>(_onHourFormatChanged);
   }
 
   Future<void> _onRequested(
@@ -29,23 +30,20 @@ class SettingsBloc extends Bloc<SettingsEvent, AppSettings> {
     emit(await _getSettings());
   }
 
-  Future<void> _onThemeChanged(
-      ThemeModeChanged event, Emitter<AppSettings> emit) async {
-    final settings = AppSettings(
-      themeMode: event.themeMode,
-      languageCode: state.languageCode,
-    );
+  Future<void> _persist(AppSettings settings, Emitter<AppSettings> emit) async {
     await _saveSettings(settings);
     emit(settings);
   }
 
+  Future<void> _onThemeChanged(
+          ThemeModeChanged event, Emitter<AppSettings> emit) =>
+      _persist(state.copyWith(themeMode: event.themeMode), emit);
+
   Future<void> _onLanguageChanged(
-      LanguageChanged event, Emitter<AppSettings> emit) async {
-    final settings = AppSettings(
-      themeMode: state.themeMode,
-      languageCode: event.languageCode,
-    );
-    await _saveSettings(settings);
-    emit(settings);
-  }
+          LanguageChanged event, Emitter<AppSettings> emit) =>
+      _persist(state.copyWith(languageCode: () => event.languageCode), emit);
+
+  Future<void> _onHourFormatChanged(
+          HourFormatChanged event, Emitter<AppSettings> emit) =>
+      _persist(state.copyWith(hourFormat: event.hourFormat), emit);
 }

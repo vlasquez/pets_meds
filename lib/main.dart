@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'domain/entities/app_settings.dart';
 import 'injection.dart';
-import 'l10n/strings.dart';
+import 'utils/strings.dart';
 import 'presentation/blocs/pets/pets_bloc.dart';
 import 'presentation/blocs/settings/settings_bloc.dart';
 import 'presentation/screens/main_screen.dart';
@@ -74,6 +74,20 @@ class PetMedsApp extends StatelessWidget {
               GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: const [Locale('en'), Locale('es')],
+            // Force 24h / AM-PM across the app (time labels and pickers)
+            // when the user overrides the system default.
+            builder: (context, child) {
+              final mq = MediaQuery.of(context);
+              final use24h = switch (settings.hourFormat) {
+                AppHourFormat.system => mq.alwaysUse24HourFormat,
+                AppHourFormat.h24 => true,
+                AppHourFormat.h12 => false,
+              };
+              return MediaQuery(
+                data: mq.copyWith(alwaysUse24HourFormat: use24h),
+                child: child!,
+              );
+            },
             home: const MainScreen(),
           );
         },

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/pet.dart';
 import '../../injection.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/history/history_bloc.dart';
 import '../widgets/empty_state.dart';
 
@@ -43,8 +43,8 @@ class HistoryScreen extends StatelessWidget {
                     final log = state.logs[i];
                     final t = state.treatmentsById[log.treatmentId];
                     return ListTile(
-                      leading: const Icon(Icons.check_circle,
-                          color: Colors.green),
+                      leading:
+                          const Icon(Icons.check_circle, color: Colors.green),
                       title: Text(t == null
                           ? '#${log.treatmentId}'
                           : '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),

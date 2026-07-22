@@ -27,3 +27,11 @@ final class LanguageChanged extends SettingsEvent {
   @override
   List<Object?> get props => [languageCode];
 }
+
+final class HourFormatChanged extends SettingsEvent {
+  final AppHourFormat hourFormat;
+  const HourFormatChanged(this.hourFormat);
+
+  @override
+  List<Object?> get props => [hourFormat];
+}

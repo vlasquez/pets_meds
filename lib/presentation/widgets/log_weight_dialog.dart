@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/weight/weight_bloc.dart';
 
 /// Dialog to log a weight measurement. Dispatches [WeightLogged]

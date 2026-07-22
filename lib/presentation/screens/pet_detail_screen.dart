@@ -5,7 +5,7 @@ import '../../domain/entities/pet.dart';
 import '../../domain/entities/treatment.dart';
 import '../../domain/entities/vaccination.dart';
 import '../../injection.dart';
-import '../../l10n/strings.dart';
+import '../../utils/strings.dart';
 import '../blocs/pet_treatments/pet_treatments_bloc.dart';
 import '../blocs/pets/pets_bloc.dart';
 import '../blocs/vaccinations/vaccinations_bloc.dart';
@@ -116,8 +116,8 @@ class _PetDetailView extends StatelessWidget {
           onSave: (t, forPet) => bloc.add(PetTreatmentSaved(
             treatment: t,
             notificationTitle: s.reminderTitle(forPet.name),
-            notificationBody: s.reminderBody(t.medicationName,
-                s.formatDose(t.doseAmount, t.doseUnit)),
+            notificationBody: s.reminderBody(
+                t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
           )),
         ),
       ),
@@ -163,8 +163,7 @@ class _PetDetailView extends StatelessWidget {
             icon: const Icon(Icons.edit),
             tooltip: s.editPet,
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => PetFormScreen(pet: currentPet)),
+              MaterialPageRoute(builder: (_) => PetFormScreen(pet: currentPet)),
             ),
           ),
           IconButton(
@@ -178,7 +177,8 @@ class _PetDetailView extends StatelessWidget {
         listenWhen: (prev, curr) => curr.doseLogCount > prev.doseLogCount,
         listener: (context, state) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(s.doseGivenSnack(state.lastDosedName ?? ''))),
+            SnackBar(
+                content: Text(s.doseGivenSnack(state.lastDosedName ?? ''))),
           );
         },
         child: ListView(
@@ -192,8 +192,8 @@ class _PetDetailView extends StatelessWidget {
             const Divider(height: 1),
             _TreatmentsSection(
               onMarkGiven: _markGiven,
-              onEdit: (ctx, t) => _openTreatmentForm(ctx,
-                  treatment: t, currentPet: currentPet),
+              onEdit: (ctx, t) =>
+                  _openTreatmentForm(ctx, treatment: t, currentPet: currentPet),
               onDelete: _deleteTreatment,
             ),
           ],
@@ -203,8 +203,7 @@ class _PetDetailView extends StatelessWidget {
         builder: (context) => FloatingActionButton(
           heroTag: 'pet_detail_fab',
           tooltip: s.addTreatment,
-          onPressed: () =>
-              _openTreatmentForm(context, currentPet: currentPet),
+          onPressed: () => _openTreatmentForm(context, currentPet: currentPet),
           child: const Icon(Icons.add),
         ),
       ),
@@ -232,8 +231,7 @@ class _PetHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(pet.name,
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(pet.name, style: Theme.of(context).textTheme.titleMedium),
                 if (breedName != null)
                   Text(breedName,
                       style: Theme.of(context).textTheme.bodyMedium),
@@ -279,11 +277,8 @@ class _WeightSection extends StatelessWidget {
                   if (latest != null)
                     Text(
                       '${latest.weightKg} kg',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                              color: Theme.of(context).colorScheme.primary),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary),
                     ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
