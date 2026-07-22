@@ -137,7 +137,8 @@ class _PetCard extends StatefulWidget {
 }
 
 class _PetCardState extends State<_PetCard> {
-  bool _expanded = true;
+  /// Pets with treatments today start expanded; pets with none collapsed.
+  late bool _expanded = widget.entry.items.isNotEmpty;
 
   void _openDetail(BuildContext context) {
     final todayBloc = context.read<TodayBloc>();
