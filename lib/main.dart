@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'domain/entities/app_settings.dart';
+import 'domain/usecases/reschedule_reminders.dart';
 import 'injection.dart';
 import 'utils/strings.dart';
 import 'presentation/blocs/pets/pets_bloc.dart';
@@ -12,7 +13,23 @@ import 'presentation/screens/main_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initDependencies();
+  await _rescheduleReminders();
   runApp(const PetMedsApp());
+}
+
+/// Re-arms treatment reminders on startup so one-shot schedules keep
+/// firing. Localized with the device locale (no BuildContext yet).
+Future<void> _rescheduleReminders() async {
+  final s = S(WidgetsBinding.instance.platformDispatcher.locale);
+  try {
+    await sl<RescheduleReminders>()(
+      title: (petName) => s.reminderTitle(petName),
+      body: (t) =>
+          s.reminderBody(t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
+    );
+  } catch (_) {
+    // Never block app launch on reminder rescheduling.
+  }
 }
 
 class PetMedsApp extends StatelessWidget {

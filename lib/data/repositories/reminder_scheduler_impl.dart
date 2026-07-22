@@ -1,17 +1,37 @@
+import 'package:reminder_scheduler/reminder_scheduler.dart' as rs;
+
 import '../../domain/entities/treatment.dart';
 import '../../domain/repositories/reminder_scheduler.dart';
-import '../datasources/local/notification_datasource.dart';
+import '../notifications/treatment_reminder_mapper.dart';
 
+/// Bridges the app's treatment reminder port to the reusable
+/// [rs.ReminderScheduler], mapping [Treatment] into the generic model.
 class ReminderSchedulerImpl implements ReminderScheduler {
-  final NotificationDataSource _notifications;
-  const ReminderSchedulerImpl(this._notifications);
+  final rs.ReminderScheduler _scheduler;
+  const ReminderSchedulerImpl(this._scheduler);
 
   @override
   Future<void> schedule(Treatment treatment,
-          {required String title, required String body}) =>
-      _notifications.scheduleTreatment(treatment, title: title, body: body);
+      {required String title, required String body}) async {
+    if (treatment.id == null) return;
+    final triggers = ReminderMapper.triggersForTreatment(treatment);
+    final groupId = ReminderMapper.treatmentGroupId(treatment.id!);
+    if (triggers.isEmpty) {
+      await _scheduler.cancelGroup(groupId);
+      return;
+    }
+    await _scheduler.schedule(rs.ReminderRequest(
+      groupId: groupId,
+      title: title,
+      body: body,
+      triggers: triggers,
+    ));
+  }
 
   @override
-  Future<void> cancel(Treatment treatment) =>
-      _notifications.cancelTreatment(treatment);
+  Future<void> cancel(Treatment treatment) async {
+    if (treatment.id == null) return;
+    await _scheduler
+        .cancelGroup(ReminderMapper.treatmentGroupId(treatment.id!));
+  }
 }
