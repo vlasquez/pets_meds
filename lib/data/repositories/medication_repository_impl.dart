@@ -20,4 +20,7 @@ class MedicationRepositoryImpl implements MedicationRepository {
   @override
   Future<void> updateMedication(Medication medication) =>
       _local.update(MedicationModel.fromEntity(medication));
+
+  @override
+  Future<void> deleteMedication(int id) => _local.delete(id);
 }

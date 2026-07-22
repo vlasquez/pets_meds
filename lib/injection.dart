@@ -29,6 +29,7 @@ import 'domain/repositories/vaccination_reminder_scheduler.dart';
 import 'domain/repositories/vaccination_repository.dart';
 import 'domain/repositories/weight_repository.dart';
 import 'domain/usecases/delete_dose_log.dart';
+import 'domain/usecases/delete_medication.dart';
 import 'domain/usecases/delete_pet.dart';
 import 'domain/usecases/delete_treatment.dart';
 import 'domain/usecases/delete_vaccination.dart';
@@ -101,6 +102,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => DeletePet(sl(), sl(), sl()));
   sl.registerLazySingleton(() => GetMedications(sl()));
   sl.registerLazySingleton(() => SaveMedication(sl()));
+  sl.registerLazySingleton(() => DeleteMedication(sl(), sl(), sl()));
   sl.registerLazySingleton(() => GetTreatments(sl()));
   sl.registerLazySingleton(() => GetAllTreatments(sl()));
   sl.registerLazySingleton(() => SaveTreatment(sl(), sl()));

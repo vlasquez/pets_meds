@@ -24,4 +24,9 @@ class MedicationLocalDataSource {
     await db.update('medications', med.toMap(),
         where: 'id = ?', whereArgs: [med.id]);
   }
+
+  Future<void> delete(int id) async {
+    final db = await _provider.database;
+    await db.delete('medications', where: 'id = ?', whereArgs: [id]);
+  }
 }

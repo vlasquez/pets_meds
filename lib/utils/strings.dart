@@ -152,8 +152,24 @@ class S {
   String get deleteMedication =>
       _es ? 'Eliminar medicamento' : 'Delete medication';
   String get deleteMedicationConfirm => _es
-      ? '¿Eliminar este medicamento y sus recordatorios?'
-      : 'Delete this medication and its reminders?';
+      ? 'Al eliminar este medicamento también se eliminarán todos los '
+          'tratamientos que lo usan y su historial. ¿Deseas continuar?'
+      : 'Deleting this medication will also delete all treatments that use '
+          'it and their history. Do you want to continue?';
+
+  /// Warning shown when the medication is assigned to treatments.
+  String deleteMedicationInUse(int n) => _es
+      ? 'Este medicamento se usa en $n tratamiento${n == 1 ? '' : 's'}. '
+          'Al eliminarlo también se eliminarán ese${n == 1 ? '' : 's'} '
+          'tratamiento${n == 1 ? '' : 's'} y su historial.'
+      : 'This medication is used by $n treatment${n == 1 ? '' : 's'}. '
+          'Deleting it will also delete ${n == 1 ? 'that' : 'those'} '
+          'treatment${n == 1 ? '' : 's'} and their history.';
+
+  String get medicationsTab => _es ? 'Medicamentos' : 'Medications';
+  String nTreatmentsUsing(int n) => _es
+      ? 'En $n tratamiento${n == 1 ? '' : 's'}'
+      : 'In $n treatment${n == 1 ? '' : 's'}';
   String get medicationName =>
       _es ? 'Nombre del medicamento' : 'Medication name';
   String get doseAmountLabel => _es ? 'Cantidad' : 'Amount';
@@ -398,6 +414,10 @@ class S {
   String get noTreatmentsToday => _es
       ? 'No hay tratamientos programados para hoy.'
       : 'No treatments scheduled for today.';
+  String get noActiveTreatmentsForPet => _es
+      ? 'No hay tratamientos activos para esta mascota.'
+      : 'No active treatments for this pet.';
+  String get add => _es ? 'Agregar' : 'Add';
   String get noTreatments => _es
       ? 'Aún no hay medicamentos. Toca + para agregar uno.'
       : 'No medications yet. Tap + to add one.';

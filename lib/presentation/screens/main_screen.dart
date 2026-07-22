@@ -3,17 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../injection.dart';
 import '../../utils/strings.dart';
+import '../blocs/medications/medications_bloc.dart';
 import '../blocs/progress/progress_bloc.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import 'home_screen.dart';
-import 'pets_screen.dart';
+import 'medications_screen.dart';
 import 'progress_screen.dart';
 import 'settings_screen.dart';
 import 'treatments_screen.dart';
 
-/// Root screen: bottom navigation with Home (today's treatments),
-/// Treatments, Progress, Pets and Settings.
+/// Root screen: bottom navigation with Home (pets + today's treatments),
+/// Treatments, Medications, Progress and Settings.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -54,6 +55,13 @@ class _MainScreenState extends State<MainScreen> {
             deleteDoseLog: sl(),
           )..add(const ProgressRequested()),
         ),
+        BlocProvider(
+          create: (_) => MedicationsBloc(
+            getMedications: sl(),
+            getAllTreatments: sl(),
+            deleteMedication: sl(),
+          )..add(const MedicationsRequested()),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -64,8 +72,8 @@ class _MainScreenState extends State<MainScreen> {
               children: const [
                 HomeScreen(),
                 TreatmentsScreen(),
+                MedicationsScreen(),
                 ProgressScreen(),
-                PetsScreen(),
                 SettingsScreen(),
               ],
             ),
@@ -81,6 +89,10 @@ class _MainScreenState extends State<MainScreen> {
                       .read<TreatmentsBloc>()
                       .add(const TreatmentsRequested());
                 } else if (i == 2) {
+                  context
+                      .read<MedicationsBloc>()
+                      .add(const MedicationsRequested());
+                } else if (i == 3) {
                   context.read<ProgressBloc>().add(const ProgressRequested());
                 }
               },
@@ -91,18 +103,18 @@ class _MainScreenState extends State<MainScreen> {
                   label: s.homeTab,
                 ),
                 NavigationDestination(
+                  icon: const Icon(Icons.healing_outlined),
+                  selectedIcon: const Icon(Icons.healing),
+                  label: s.treatmentsTab,
+                ),
+                NavigationDestination(
                   icon: const Icon(Icons.medication_outlined),
                   selectedIcon: const Icon(Icons.medication),
-                  label: s.treatmentsTab,
+                  label: s.medicationsTab,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.insights),
                   label: s.progressTab,
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.pets_outlined),
-                  selectedIcon: const Icon(Icons.pets),
-                  label: s.petsTab,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.settings_outlined),
