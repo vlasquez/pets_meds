@@ -9,13 +9,12 @@ import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import 'home_screen.dart';
 import 'medications_screen.dart';
-import 'pets_screen.dart';
 import 'progress_screen.dart';
 import 'settings_screen.dart';
 import 'treatments_screen.dart';
 
-/// Root screen: bottom navigation with Home (today's treatments),
-/// Treatments, Medications, Progress, Pets and Settings.
+/// Root screen: bottom navigation with Home (pets + today's treatments),
+/// Treatments, Medications, Progress and Settings.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -75,7 +74,6 @@ class _MainScreenState extends State<MainScreen> {
                 TreatmentsScreen(),
                 MedicationsScreen(),
                 ProgressScreen(),
-                PetsScreen(),
                 SettingsScreen(),
               ],
             ),
@@ -117,11 +115,6 @@ class _MainScreenState extends State<MainScreen> {
                 NavigationDestination(
                   icon: const Icon(Icons.insights),
                   label: s.progressTab,
-                ),
-                NavigationDestination(
-                  icon: const Icon(Icons.pets_outlined),
-                  selectedIcon: const Icon(Icons.pets),
-                  label: s.petsTab,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.settings_outlined),

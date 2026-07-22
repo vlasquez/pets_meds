@@ -414,6 +414,10 @@ class S {
   String get noTreatmentsToday => _es
       ? 'No hay tratamientos programados para hoy.'
       : 'No treatments scheduled for today.';
+  String get noActiveTreatmentsForPet => _es
+      ? 'No hay tratamientos activos para esta mascota.'
+      : 'No active treatments for this pet.';
+  String get add => _es ? 'Agregar' : 'Add';
   String get noTreatments => _es
       ? 'Aún no hay medicamentos. Toca + para agregar uno.'
       : 'No medications yet. Tap + to add one.';

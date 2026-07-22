@@ -73,12 +73,17 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       final pets = await _getPets();
       final treatments = await _getAllTreatments();
 
+      // One entry per pet (even with no treatments today), so Home can
+      // list every pet.
       final entries = <TodayEntry>[];
       for (final pet in pets) {
         final petTreatments = treatments
             .where((t) => t.petId == pet.id && t.isScheduledOn(today))
             .toList();
-        if (petTreatments.isEmpty) continue;
+        if (petTreatments.isEmpty) {
+          entries.add(TodayEntry(pet: pet, items: const []));
+          continue;
+        }
 
         final history = await _getDoseHistory(pet.id!);
         // All of today's logs per treatment, oldest first (logs come
