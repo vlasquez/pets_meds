@@ -152,8 +152,10 @@ class S {
   String get deleteMedication =>
       _es ? 'Eliminar medicamento' : 'Delete medication';
   String get deleteMedicationConfirm => _es
-      ? '¿Eliminar este medicamento?'
-      : 'Delete this medication?';
+      ? 'Al eliminar este medicamento también se eliminarán todos los '
+          'tratamientos que lo usan y su historial. ¿Deseas continuar?'
+      : 'Deleting this medication will also delete all treatments that use '
+          'it and their history. Do you want to continue?';
 
   /// Warning shown when the medication is assigned to treatments.
   String deleteMedicationInUse(int n) => _es
