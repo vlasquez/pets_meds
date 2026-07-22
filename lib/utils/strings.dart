@@ -152,8 +152,22 @@ class S {
   String get deleteMedication =>
       _es ? 'Eliminar medicamento' : 'Delete medication';
   String get deleteMedicationConfirm => _es
-      ? '¿Eliminar este medicamento y sus recordatorios?'
-      : 'Delete this medication and its reminders?';
+      ? '¿Eliminar este medicamento?'
+      : 'Delete this medication?';
+
+  /// Warning shown when the medication is assigned to treatments.
+  String deleteMedicationInUse(int n) => _es
+      ? 'Este medicamento se usa en $n tratamiento${n == 1 ? '' : 's'}. '
+          'Al eliminarlo también se eliminarán ese${n == 1 ? '' : 's'} '
+          'tratamiento${n == 1 ? '' : 's'} y su historial.'
+      : 'This medication is used by $n treatment${n == 1 ? '' : 's'}. '
+          'Deleting it will also delete ${n == 1 ? 'that' : 'those'} '
+          'treatment${n == 1 ? '' : 's'} and their history.';
+
+  String get medicationsTab => _es ? 'Medicamentos' : 'Medications';
+  String nTreatmentsUsing(int n) => _es
+      ? 'En $n tratamiento${n == 1 ? '' : 's'}'
+      : 'In $n treatment${n == 1 ? '' : 's'}';
   String get medicationName =>
       _es ? 'Nombre del medicamento' : 'Medication name';
   String get doseAmountLabel => _es ? 'Cantidad' : 'Amount';

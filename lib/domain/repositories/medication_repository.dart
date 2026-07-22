@@ -6,4 +6,8 @@ abstract interface class MedicationRepository {
   Future<List<Medication>> getMedications();
   Future<Medication> insertMedication(Medication medication);
   Future<void> updateMedication(Medication medication);
+
+  /// Deletes a catalog medication. Treatments referencing it (and their
+  /// dose logs) are removed by cascade in the data layer.
+  Future<void> deleteMedication(int id);
 }
