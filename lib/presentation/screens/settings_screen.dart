@@ -100,13 +100,13 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  String _hourFormatLabel(S s, HourFormat f) {
+  String _hourFormatLabel(S s, AppHourFormat f) {
     switch (f) {
-      case HourFormat.system:
+      case AppHourFormat.system:
         return s.systemDefault;
-      case HourFormat.h24:
+      case AppHourFormat.h24:
         return s.hourFormat24;
-      case HourFormat.h12:
+      case AppHourFormat.h12:
         return s.hourFormat12;
     }
   }
@@ -115,19 +115,19 @@ class SettingsScreen extends StatelessWidget {
       BuildContext context, AppSettings settings) async {
     final s = S.of(context);
     final bloc = context.read<SettingsBloc>();
-    final selected = await showDialog<HourFormat>(
+    final selected = await showDialog<AppHourFormat>(
       context: context,
       builder: (ctx) => SimpleDialog(
         title: Text(s.hourFormat),
         children: [
-          RadioGroup<HourFormat>(
+          RadioGroup<AppHourFormat>(
             groupValue: settings.hourFormat,
             onChanged: (v) => Navigator.of(ctx).pop(v),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final f in HourFormat.values)
-                  RadioListTile<HourFormat>(
+                for (final f in AppHourFormat.values)
+                  RadioListTile<AppHourFormat>(
                     value: f,
                     title: Text(_hourFormatLabel(s, f)),
                   ),

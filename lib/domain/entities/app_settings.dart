@@ -4,7 +4,7 @@ enum AppThemeMode { system, light, dark }
 
 /// How times of day are displayed. [system] follows the device's
 /// 24-hour setting; the others force 24h or AM/PM.
-enum HourFormat { system, h24, h12 }
+enum AppHourFormat { system, h24, h12 }
 
 /// Domain entity: user preferences.
 class AppSettings extends Equatable {
@@ -13,18 +13,18 @@ class AppSettings extends Equatable {
   /// 'es', 'en', or null to follow the system language.
   final String? languageCode;
 
-  final HourFormat hourFormat;
+  final AppHourFormat hourFormat;
 
   const AppSettings({
     this.themeMode = AppThemeMode.system,
     this.languageCode,
-    this.hourFormat = HourFormat.system,
+    this.hourFormat = AppHourFormat.system,
   });
 
   AppSettings copyWith({
     AppThemeMode? themeMode,
     String? Function()? languageCode,
-    HourFormat? hourFormat,
+    AppHourFormat? hourFormat,
   }) =>
       AppSettings(
         themeMode: themeMode ?? this.themeMode,

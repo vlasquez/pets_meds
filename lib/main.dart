@@ -79,9 +79,9 @@ class PetMedsApp extends StatelessWidget {
             builder: (context, child) {
               final mq = MediaQuery.of(context);
               final use24h = switch (settings.hourFormat) {
-                HourFormat.system => mq.alwaysUse24HourFormat,
-                HourFormat.h24 => true,
-                HourFormat.h12 => false,
+                AppHourFormat.system => mq.alwaysUse24HourFormat,
+                AppHourFormat.h24 => true,
+                AppHourFormat.h12 => false,
               };
               return MediaQuery(
                 data: mq.copyWith(alwaysUse24HourFormat: use24h),

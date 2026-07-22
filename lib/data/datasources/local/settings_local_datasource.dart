@@ -14,8 +14,8 @@ class SettingsLocalDataSource {
       themeMode: _enumByName(
           AppThemeMode.values, prefs.getString(_themeKey), AppThemeMode.system),
       languageCode: prefs.getString(_languageKey),
-      hourFormat: _enumByName(
-          HourFormat.values, prefs.getString(_hourFormatKey), HourFormat.system),
+      hourFormat: _enumByName(AppHourFormat.values,
+          prefs.getString(_hourFormatKey), AppHourFormat.system),
     );
   }
 

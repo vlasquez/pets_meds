@@ -29,7 +29,7 @@ final class LanguageChanged extends SettingsEvent {
 }
 
 final class HourFormatChanged extends SettingsEvent {
-  final HourFormat hourFormat;
+  final AppHourFormat hourFormat;
   const HourFormatChanged(this.hourFormat);
 
   @override
