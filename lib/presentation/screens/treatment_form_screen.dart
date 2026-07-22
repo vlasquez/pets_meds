@@ -101,9 +101,10 @@ class _TreatmentFormScreenState extends State<TreatmentFormScreen> {
   bool get _usesTimes =>
       _frequency.type != FrequencyType.onDemand && !_isHourlyInterval;
 
-  /// Whether multiple times per day make sense (daily/weekdays/cyclic).
+  /// Whether more than one intake time per day makes sense. "Daily" is
+  /// once per day (use an hourly interval for several doses a day);
+  /// weekdays/cyclic may still have multiple times on their active days.
   bool get _multipleTimes =>
-      _frequency.type == FrequencyType.daily ||
       _frequency.type == FrequencyType.weekdays ||
       _frequency.type == FrequencyType.cyclic;
 
