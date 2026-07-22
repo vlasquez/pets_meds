@@ -16,8 +16,10 @@ dependencies:
   get_it: ^9.2.1
   sqflite: ^2.3.3
   path: ^1.9.0
-  flutter_local_notifications: ^19.5.0
-  timezone: ^0.10.1
+  # Reusable reminder scheduler (local package). Owns the
+  # flutter_local_notifications + timezone dependencies.
+  reminder_scheduler:
+    path: packages/reminder_scheduler
   image_picker: ^1.1.2
   path_provider: ^2.1.4
   shared_preferences: ^2.3.2

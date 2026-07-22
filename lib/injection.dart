@@ -1,9 +1,9 @@
 import 'package:get_it/get_it.dart';
+import 'package:reminder_scheduler/reminder_scheduler.dart' as rs;
 
 import 'data/datasources/local/database_provider.dart';
 import 'data/datasources/local/dose_log_local_datasource.dart';
 import 'data/datasources/local/medication_local_datasource.dart';
-import 'data/datasources/local/notification_datasource.dart';
 import 'data/datasources/local/pet_local_datasource.dart';
 import 'data/datasources/local/photo_storage.dart';
 import 'data/datasources/local/settings_local_datasource.dart';
@@ -43,6 +43,7 @@ import 'domain/usecases/get_vaccinations.dart';
 import 'domain/usecases/get_weight_history.dart';
 import 'domain/usecases/log_dose.dart';
 import 'domain/usecases/log_weight.dart';
+import 'domain/usecases/reschedule_reminders.dart';
 import 'domain/usecases/save_medication.dart';
 import 'domain/usecases/save_pet.dart';
 import 'domain/usecases/save_settings.dart';
@@ -61,9 +62,19 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => DoseLogLocalDataSource(sl()));
   sl.registerLazySingleton(() => WeightLocalDataSource(sl()));
   sl.registerLazySingleton(() => VaccinationLocalDataSource(sl()));
-  sl.registerLazySingleton(() => NotificationDataSource());
   sl.registerLazySingleton(() => PhotoStorage());
   sl.registerLazySingleton(() => SettingsLocalDataSource());
+
+  // Reusable reminder scheduler (local package).
+  sl.registerLazySingleton<rs.ReminderScheduler>(
+    () => rs.LocalNotificationsReminderScheduler(
+      config: const rs.ReminderSchedulerConfig(
+        androidChannelId: 'pet_meds_reminders',
+        androidChannelName: 'Medication reminders',
+        androidChannelDescription: 'Reminders for pet medications',
+      ),
+    ),
+  );
 
   // Repositories (domain contracts → data implementations)
   sl.registerLazySingleton<PetRepository>(() => PetRepositoryImpl(sl()));
@@ -105,6 +116,9 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => DeleteVaccination(sl(), sl()));
   sl.registerLazySingleton(() => GetSettings(sl()));
   sl.registerLazySingleton(() => SaveSettings(sl()));
+  sl.registerLazySingleton(() => RescheduleReminders(sl(), sl(), sl()));
 
-  await sl<NotificationDataSource>().init();
+  final scheduler = sl<rs.ReminderScheduler>();
+  await scheduler.initialize();
+  await scheduler.requestPermissions();
 }
