@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+/// Biological sex of a pet.
+enum PetGender { male, female }
+
 /// Domain entity: a pet. Pure Dart — no UI or persistence details.
 class Pet extends Equatable {
   final int? id;
@@ -8,6 +11,8 @@ class Pet extends Equatable {
 
   /// Breed enum name ([DogBreed]/[CatBreed] from breed.dart, by species).
   final String? breed;
+
+  final PetGender? gender;
 
   final String? notes;
 
@@ -21,6 +26,7 @@ class Pet extends Equatable {
     required this.name,
     required this.species,
     this.breed,
+    this.gender,
     this.notes,
     this.photoPath,
     this.birthDate,
@@ -31,6 +37,7 @@ class Pet extends Equatable {
     String? name,
     String? species,
     String? breed,
+    PetGender? gender,
     String? notes,
     String? photoPath,
     DateTime? birthDate,
@@ -40,6 +47,7 @@ class Pet extends Equatable {
         name: name ?? this.name,
         species: species ?? this.species,
         breed: breed ?? this.breed,
+        gender: gender ?? this.gender,
         notes: notes ?? this.notes,
         photoPath: photoPath ?? this.photoPath,
         birthDate: birthDate ?? this.birthDate,
@@ -61,5 +69,5 @@ class Pet extends Equatable {
 
   @override
   List<Object?> get props =>
-      [id, name, species, breed, notes, photoPath, birthDate];
+      [id, name, species, breed, gender, notes, photoPath, birthDate];
 }

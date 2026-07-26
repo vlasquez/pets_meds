@@ -7,6 +7,7 @@ import '../blocs/pets/pets_bloc.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/gender_icon.dart';
 import '../widgets/intake_chip.dart';
 import '../widgets/pet_avatar.dart';
 import 'pet_detail_screen.dart';
@@ -162,6 +163,7 @@ class _PetCardState extends State<_PetCard> {
     final s = S.of(context);
     final theme = Theme.of(context);
     final entry = widget.entry;
+    final age = entry.pet.ageAt(DateTime.now());
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       clipBehavior: Clip.antiAlias,
@@ -173,9 +175,22 @@ class _PetCardState extends State<_PetCard> {
             // Tap the name (or avatar) to open the pet's detail screen.
             title: InkWell(
               onTap: () => _openDetail(context),
-              child: Text(entry.pet.name,
-                  style: theme.textTheme.titleMedium),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(entry.pet.name,
+                        style: theme.textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                  if (entry.pet.gender != null) ...[
+                    const SizedBox(width: 6),
+                    GenderIcon(gender: entry.pet.gender),
+                  ],
+                ],
+              ),
             ),
+            subtitle: age == null ? null : Text(s.age(age.$1, age.$2)),
             trailing: IconButton(
               icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
               onPressed: () => setState(() => _expanded = !_expanded),

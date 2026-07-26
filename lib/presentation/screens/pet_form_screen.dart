@@ -25,6 +25,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
   late final TextEditingController _notesCtrl;
   String _species = 'dog';
   String? _breed; // DogBreed/CatBreed enum name, per _species.
+  PetGender? _gender;
   String? _photoPath;
   DateTime? _birthDate;
   bool _photoChanged = false;
@@ -36,6 +37,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
     _notesCtrl = TextEditingController(text: widget.pet?.notes ?? '');
     _species = widget.pet?.species ?? 'dog';
     _breed = widget.pet?.breed;
+    _gender = widget.pet?.gender;
     _photoPath = widget.pet?.photoPath;
     _birthDate = widget.pet?.birthDate;
   }
@@ -124,6 +126,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       name: _nameCtrl.text.trim(),
       species: _species,
       breed: _breed,
+      gender: _gender,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       photoPath: photoPath,
       birthDate: _birthDate,
@@ -202,6 +205,30 @@ class _PetFormScreenState extends State<PetFormScreen> {
                 onChanged: (v) => setState(() => _breed = v),
               ),
             ],
+            const SizedBox(height: 16),
+            Text(s.genderLabel,
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            // Tap a selected chip again to clear it (gender is optional).
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  avatar: const Icon(Icons.male, size: 18),
+                  label: Text(s.male),
+                  selected: _gender == PetGender.male,
+                  onSelected: (sel) => setState(
+                      () => _gender = sel ? PetGender.male : null),
+                ),
+                ChoiceChip(
+                  avatar: const Icon(Icons.female, size: 18),
+                  label: Text(s.female),
+                  selected: _gender == PetGender.female,
+                  onSelected: (sel) => setState(
+                      () => _gender = sel ? PetGender.female : null),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
