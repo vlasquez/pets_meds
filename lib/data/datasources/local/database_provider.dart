@@ -18,7 +18,7 @@ class DatabaseProvider {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pet_meds.db'),
-      version: 8,
+      version: 9,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pets(
@@ -26,6 +26,7 @@ class DatabaseProvider {
             name TEXT NOT NULL,
             species TEXT NOT NULL,
             breed TEXT,
+            gender TEXT,
             notes TEXT,
             photoPath TEXT,
             birthDate TEXT
@@ -90,6 +91,9 @@ class DatabaseProvider {
                 "UPDATE treatments SET intervalUnit = 'days', frequencyType = 'interval' "
                 "WHERE frequencyType = 'intervalDays'");
           }
+        }
+        if (oldVersion < 9) {
+          await db.execute('ALTER TABLE pets ADD COLUMN gender TEXT');
         }
       },
       onConfigure: (db) async {

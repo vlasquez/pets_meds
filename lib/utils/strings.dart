@@ -35,6 +35,9 @@ class S {
   String get cat => _es ? 'Gato' : 'Cat';
   String get other => _es ? 'Otro' : 'Other';
   String get breedLabel => _es ? 'Raza' : 'Breed';
+  String get genderLabel => _es ? 'Sexo' : 'Gender';
+  String get male => _es ? 'Macho' : 'Male';
+  String get female => _es ? 'Hembra' : 'Female';
 
   String dogBreedName(DogBreed breed) {
     switch (breed) {

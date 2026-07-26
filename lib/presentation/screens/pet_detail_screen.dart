@@ -13,6 +13,7 @@ import '../blocs/weight/weight_bloc.dart';
 import '../widgets/add_vaccination_dialog.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/gender_icon.dart';
 import '../widgets/log_weight_dialog.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/treatment_card.dart';
@@ -231,7 +232,19 @@ class _PetHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(pet.name, style: Theme.of(context).textTheme.titleMedium),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(pet.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    if (pet.gender != null) ...[
+                      const SizedBox(width: 6),
+                      GenderIcon(gender: pet.gender),
+                    ],
+                  ],
+                ),
                 if (breedName != null)
                   Text(breedName,
                       style: Theme.of(context).textTheme.bodyMedium),
