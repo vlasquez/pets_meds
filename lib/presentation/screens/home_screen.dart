@@ -163,6 +163,7 @@ class _PetCardState extends State<_PetCard> {
     final s = S.of(context);
     final theme = Theme.of(context);
     final entry = widget.entry;
+    final age = entry.pet.ageAt(DateTime.now());
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       clipBehavior: Clip.antiAlias,
@@ -189,6 +190,7 @@ class _PetCardState extends State<_PetCard> {
                 ],
               ),
             ),
+            subtitle: age == null ? null : Text(s.age(age.$1, age.$2)),
             trailing: IconButton(
               icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
               onPressed: () => setState(() => _expanded = !_expanded),
