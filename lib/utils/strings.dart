@@ -379,6 +379,15 @@ class S {
   }
 
   String get weight => _es ? 'Peso' : 'Weight';
+  String get lastWeight => _es ? 'Último peso' : 'Last weight';
+  String get lastVaccination =>
+      _es ? 'Última vacuna' : 'Last vaccination';
+  String get noWeightYet =>
+      _es ? 'Sin peso registrado aún' : 'No weight registered yet';
+  String get noVaccinationYet => _es
+      ? 'Sin vacunas registradas aún'
+      : 'No vaccination registered yet';
+  String get viewPetDetails => _es ? 'Ver detalle' : 'View details';
   String get weightKgLabel => _es ? 'Peso (kg)' : 'Weight (kg)';
   String get logWeight => _es ? 'Registrar peso' : 'Log weight';
   String get weightHistory => _es ? 'Historial de peso' : 'Weight history';

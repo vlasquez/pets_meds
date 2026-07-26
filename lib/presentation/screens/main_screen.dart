@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../injection.dart';
 import '../../utils/strings.dart';
 import '../blocs/medications/medications_bloc.dart';
+import '../blocs/pets_overview/pets_overview_bloc.dart';
 import '../blocs/progress/progress_bloc.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
@@ -62,6 +63,14 @@ class _MainScreenState extends State<MainScreen> {
             deleteMedication: sl(),
           )..add(const MedicationsRequested()),
         ),
+        BlocProvider(
+          create: (_) => PetsOverviewBloc(
+            getPets: sl(),
+            getWeightHistory: sl(),
+            getVaccinations: sl(),
+            getTreatments: sl(),
+          )..add(const PetsOverviewRequested()),
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -91,6 +100,10 @@ class _MainScreenState extends State<MainScreen> {
                   context
                       .read<MedicationsBloc>()
                       .add(const MedicationsRequested());
+                } else if (i == 2) {
+                  context
+                      .read<PetsOverviewBloc>()
+                      .add(const PetsOverviewRequested());
                 } else if (i == 3) {
                   context.read<ProgressBloc>().add(const ProgressRequested());
                 }
