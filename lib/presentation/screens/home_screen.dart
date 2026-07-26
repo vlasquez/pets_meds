@@ -11,22 +11,13 @@ import '../widgets/gender_icon.dart';
 import '../widgets/intake_chip.dart';
 import '../widgets/pet_avatar.dart';
 import 'pet_detail_screen.dart';
-import 'pet_form_screen.dart';
 import 'treatment_form_screen.dart';
 
-/// Home tab: every pet as a collapsible card listing today's treatments.
-/// A pet with none shows "No active treatments for this pet".
-/// Expects [TodayBloc], [TreatmentsBloc] and [PetsBloc] above it.
+/// Home tab: today's agenda — the pets that have doses due today, each a
+/// collapsible card of today's treatments. Manage the full roster in the
+/// Pets tab. Expects [TodayBloc], [TreatmentsBloc] and [PetsBloc] above it.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  Future<void> _addPet(BuildContext context) async {
-    final todayBloc = context.read<TodayBloc>();
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PetFormScreen()),
-    );
-    todayBloc.add(const TodayRequested());
-  }
 
   Future<void> _addTreatment(BuildContext context) async {
     final s = S.of(context);
@@ -55,37 +46,6 @@ class HomeScreen extends StatelessWidget {
     treatmentsBloc.add(const TreatmentsRequested());
   }
 
-  /// FAB menu: add a pet or a treatment.
-  Future<void> _showAddMenu(BuildContext context) async {
-    final s = S.of(context);
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.pets),
-              title: Text(s.addPet),
-              onTap: () => Navigator.of(ctx).pop('pet'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.medication),
-              title: Text(s.addTreatment),
-              onTap: () => Navigator.of(ctx).pop('treatment'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (!context.mounted) return;
-    if (action == 'pet') {
-      await _addPet(context);
-    } else if (action == 'treatment') {
-      await _addTreatment(context);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -93,8 +53,8 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(title: Text(s.today)),
       floatingActionButton: FloatingActionButton(
         heroTag: 'home_fab',
-        tooltip: s.add,
-        onPressed: () => _showAddMenu(context),
+        tooltip: s.addTreatment,
+        onPressed: () => _addTreatment(context),
         child: const Icon(Icons.add),
       ),
       body: BlocListener<TodayBloc, TodayState>(
@@ -114,13 +74,16 @@ class HomeScreen extends StatelessWidget {
               case TodayStatus.failure:
                 return EmptyState(message: state.error ?? 'Error');
               case TodayStatus.success:
-                if (state.entries.isEmpty) {
-                  return EmptyState(message: s.noPets);
+                // Agenda shows only pets that have doses due today.
+                final due =
+                    state.entries.where((e) => e.items.isNotEmpty).toList();
+                if (due.isEmpty) {
+                  return EmptyState(message: s.noTreatmentsToday);
                 }
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(0, 8, 0, 88),
                   children: [
-                    for (final entry in state.entries) _PetCard(entry: entry),
+                    for (final entry in due) _PetCard(entry: entry),
                   ],
                 );
             }

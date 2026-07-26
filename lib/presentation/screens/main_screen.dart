@@ -8,13 +8,13 @@ import '../blocs/progress/progress_bloc.dart';
 import '../blocs/today/today_bloc.dart';
 import '../blocs/treatments/treatments_bloc.dart';
 import 'home_screen.dart';
-import 'medications_screen.dart';
+import 'pets_screen.dart';
 import 'progress_screen.dart';
 import 'settings_screen.dart';
 import 'treatments_screen.dart';
 
-/// Root screen: bottom navigation with Home (pets + today's treatments),
-/// Treatments, Medications, Progress and Settings.
+/// Root screen: bottom navigation with Home (today's agenda), Treatments
+/// (with a Medications toggle), Pets, Progress and Settings.
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -72,7 +72,7 @@ class _MainScreenState extends State<MainScreen> {
               children: const [
                 HomeScreen(),
                 TreatmentsScreen(),
-                MedicationsScreen(),
+                PetsScreen(),
                 ProgressScreen(),
                 SettingsScreen(),
               ],
@@ -88,7 +88,6 @@ class _MainScreenState extends State<MainScreen> {
                   context
                       .read<TreatmentsBloc>()
                       .add(const TreatmentsRequested());
-                } else if (i == 2) {
                   context
                       .read<MedicationsBloc>()
                       .add(const MedicationsRequested());
@@ -103,14 +102,14 @@ class _MainScreenState extends State<MainScreen> {
                   label: s.homeTab,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.healing_outlined),
-                  selectedIcon: const Icon(Icons.healing),
+                  icon: const Icon(Icons.medication_outlined),
+                  selectedIcon: const Icon(Icons.medication),
                   label: s.treatmentsTab,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.medication_outlined),
-                  selectedIcon: const Icon(Icons.medication),
-                  label: s.medicationsTab,
+                  icon: const Icon(Icons.pets_outlined),
+                  selectedIcon: const Icon(Icons.pets),
+                  label: s.petsTab,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.insights),
