@@ -38,7 +38,12 @@ class LocalNotificationsReminderScheduler implements ReminderScheduler {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
-      return android.requestNotificationsPermission();
+      final granted = await android.requestNotificationsPermission();
+      // Needed for exact alarms on Android 12–13 (API 31/32) where the
+      // SCHEDULE_EXACT_ALARM permission must be granted by the user.
+      // On API 33+ USE_EXACT_ALARM (in the manifest) covers it.
+      await android.requestExactAlarmsPermission();
+      return granted;
     }
     final ios = _plugin.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
@@ -97,7 +102,9 @@ class LocalNotificationsReminderScheduler implements ReminderScheduler {
       request.body,
       when,
       _details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // Exact so medication reminders fire on time (inexact lets Doze
+      // batch them to a later maintenance window).
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: match,
     );
   }
