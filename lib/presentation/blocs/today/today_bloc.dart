@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/entities/dose_log.dart';
 import '../../../domain/entities/pet.dart';
 import '../../../domain/entities/schedule_time.dart';
 import '../../../domain/entities/treatment.dart';
@@ -50,6 +51,7 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
       event.treatment,
       notificationTitle: event.notificationTitle,
       notificationBody: event.notificationBody,
+      givenAt: event.at,
     );
     emit(state.copyWith(
       doseLogCount: state.doseLogCount + 1,
@@ -66,6 +68,43 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
 
   static bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Maps today's dose logs to one slot per expected intake. Slots align
+  /// with the treatment's intake hours: a log is matched to the slot with
+  /// the same hour:minute, so each intake is independent. On-demand (no
+  /// intake hours) fills its single slot with any log of the day.
+  List<int?> _slotLogIds(
+      Treatment t, List<DoseLog> allLogs, DateTime today) {
+    final logs = allLogs
+        .where((l) => l.treatmentId == t.id && _isSameDay(l.givenAt, today))
+        .toList();
+    final intakes = t.intakeTimesPerDay;
+
+    if (intakes.isEmpty) {
+      // No fixed hours: fill slots positionally by count.
+      final slots = List<int?>.filled(t.dosesPerDay, null);
+      for (var i = 0; i < slots.length && i < logs.length; i++) {
+        slots[i] = logs[i].id;
+      }
+      return slots;
+    }
+
+    final remaining = List.of(logs);
+    return [
+      for (final time in intakes)
+        _takeMatching(remaining, time.hour, time.minute),
+    ];
+  }
+
+  /// Removes and returns the id of a log at [hour]:[minute], or null.
+  static int? _takeMatching(List<DoseLog> logs, int hour, int minute) {
+    final idx = logs.indexWhere(
+        (l) => l.givenAt.hour == hour && l.givenAt.minute == minute);
+    if (idx < 0) return null;
+    final id = logs[idx].id;
+    logs.removeAt(idx);
+    return id;
+  }
 
   Future<void> _emitToday(Emitter<TodayState> emit) async {
     try {
@@ -86,22 +125,13 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
         }
 
         final history = await _getDoseHistory(pet.id!);
-        // All of today's logs per treatment, oldest first (logs come
-        // newest-first from the repository).
-        final todayLogIds = <int, List<int>>{};
-        for (final log in history.logs.reversed) {
-          if (_isSameDay(log.givenAt, today)) {
-            todayLogIds.putIfAbsent(log.treatmentId, () => []).add(log.id!);
-          }
-        }
-
         entries.add(TodayEntry(
           pet: pet,
           items: [
             for (final t in petTreatments)
               TodayItem(
                 treatment: t,
-                todayLogIds: todayLogIds[t.id] ?? const [],
+                slotLogIds: _slotLogIds(t, history.logs, today),
               ),
           ],
         ));

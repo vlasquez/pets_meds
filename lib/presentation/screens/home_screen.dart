@@ -197,20 +197,28 @@ class _TodayTreatmentTile extends StatelessWidget {
   final TodayItem item;
   const _TodayTreatmentTile({required this.entry, required this.item});
 
-  void _markGiven(BuildContext context) {
+  /// Marks the [index]-th intake as given, logged at its intake time so
+  /// each intake is independent.
+  void _check(BuildContext context, int index) {
     final s = S.of(context);
     final t = item.treatment;
+    final now = DateTime.now();
+    final intakes = item.intakeTimes;
+    final at = index < intakes.length
+        ? DateTime(now.year, now.month, now.day, intakes[index].hour,
+            intakes[index].minute)
+        : now;
     context.read<TodayBloc>().add(TodayDoseGiven(
           treatment: t,
+          at: at,
           notificationTitle: s.reminderTitle(entry.pet.name),
           notificationBody: s.reminderBody(
               t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
         ));
   }
 
-  void _unmarkLatest(BuildContext context) {
-    if (item.todayLogIds.isEmpty) return;
-    context.read<TodayBloc>().add(TodayDoseUnmarked(item.todayLogIds.last));
+  void _uncheck(BuildContext context, int logId) {
+    context.read<TodayBloc>().add(TodayDoseUnmarked(logId));
   }
 
   @override
@@ -260,10 +268,10 @@ class _TodayTreatmentTile extends StatelessWidget {
                   label: i < item.intakeTimes.length
                       ? formatScheduleTime(context, item.intakeTimes[i])
                       : '#${i + 1}',
-                  taken: i < item.givenCount,
-                  onTap: i < item.givenCount
-                      ? () => _unmarkLatest(context)
-                      : () => _markGiven(context),
+                  taken: item.isTaken(i),
+                  onTap: item.isTaken(i)
+                      ? () => _uncheck(context, item.logIdAt(i)!)
+                      : () => _check(context, i),
                 ),
             ],
           ),

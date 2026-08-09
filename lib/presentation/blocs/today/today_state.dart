@@ -2,33 +2,40 @@ part of 'today_bloc.dart';
 
 enum TodayStatus { initial, loading, success, failure }
 
-/// A treatment scheduled today plus today's dose logs.
+/// A treatment scheduled today with per-intake state.
 final class TodayItem extends Equatable {
   final Treatment treatment;
 
-  /// Ids of today's dose logs for this treatment, oldest first.
-  /// Each log is one intake; unchecking deletes the latest one.
-  final List<int> todayLogIds;
+  /// One entry per expected intake (aligned with [intakeTimes]): the dose
+  /// log id when that intake was taken, or null when it wasn't. Each intake
+  /// is checked independently — no need to check earlier ones first.
+  final List<int?> slotLogIds;
 
-  const TodayItem({required this.treatment, this.todayLogIds = const []});
+  const TodayItem({required this.treatment, required this.slotLogIds});
 
   /// Intakes taken today.
-  int get givenCount => todayLogIds.length;
+  int get givenCount => slotLogIds.where((id) => id != null).length;
 
   /// Intakes expected today.
-  int get targetCount => treatment.dosesPerDay;
+  int get targetCount => slotLogIds.length;
 
   /// The intake hours of the day (may be empty for on-demand).
   List<ScheduleTime> get intakeTimes => treatment.intakeTimesPerDay;
 
+  bool isTaken(int index) =>
+      index >= 0 && index < slotLogIds.length && slotLogIds[index] != null;
+
+  int? logIdAt(int index) =>
+      (index >= 0 && index < slotLogIds.length) ? slotLogIds[index] : null;
+
   /// The treatment is complete for the day when every intake was taken.
-  bool get completed => givenCount >= targetCount;
+  bool get completed => targetCount > 0 && givenCount >= targetCount;
 
   double get progress =>
       targetCount == 0 ? 0 : (givenCount / targetCount).clamp(0.0, 1.0);
 
   @override
-  List<Object?> get props => [treatment, todayLogIds];
+  List<Object?> get props => [treatment, slotLogIds];
 }
 
 /// A pet with its treatments scheduled for today.
