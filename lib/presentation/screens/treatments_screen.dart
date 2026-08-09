@@ -103,6 +103,27 @@ class _TreatmentsView extends StatelessWidget {
     if (confirmed) bloc.add(TreatmentDeleted(entry.treatment));
   }
 
+  /// Pet subtitle: a status breakdown when any treatment is not active,
+  /// otherwise just the total count.
+  String _petSubtitle(S s, List<TreatmentEntry> entries) {
+    final now = DateTime.now();
+    var active = 0, inactive = 0, completed = 0;
+    for (final e in entries) {
+      switch (e.treatment.statusOn(now)) {
+        case TreatmentStatus.active:
+          active++;
+        case TreatmentStatus.inactive:
+          inactive++;
+        case TreatmentStatus.completed:
+          completed++;
+      }
+    }
+    if (inactive == 0 && completed == 0) {
+      return s.nTreatments(entries.length);
+    }
+    return s.treatmentCountsBreakdown(active, inactive, completed);
+  }
+
   /// Groups entries per pet; treatments sorted oldest → latest.
   List<(Pet, List<TreatmentEntry>)> _groupByPet(TreatmentsState state) {
     final byPetId = <int, List<TreatmentEntry>>{};
@@ -148,7 +169,7 @@ class _TreatmentsView extends StatelessWidget {
                       leading: PetAvatar(pet: pet),
                       initiallyExpanded: true,
                       title: Text(pet.name),
-                      subtitle: Text(s.nTreatments(entries.length)),
+                      subtitle: Text(_petSubtitle(s, entries)),
                       children: [
                         for (final e in entries)
                           _TreatmentTile(
@@ -204,17 +225,28 @@ class _TreatmentTile extends StatelessWidget {
     final theme = Theme.of(context);
     final t = entry.treatment;
     final remaining = s.remainingDaysLabel(t.remainingDays(DateTime.now()));
+    final status = t.statusOn(DateTime.now());
     return ExpansionTile(
       dense: true,
       leading: CircleAvatar(
         radius: 16,
-        backgroundColor: t.active
+        backgroundColor: status == TreatmentStatus.active
             ? theme.colorScheme.primaryContainer
             : theme.colorScheme.surfaceContainerHighest,
         child: const Icon(Icons.medication, size: 18),
       ),
-      title: Text(
-          '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+                '${t.medicationName} · ${s.formatDose(t.doseAmount, t.doseUnit)}'),
+          ),
+          if (status != TreatmentStatus.active) ...[
+            const SizedBox(width: 8),
+            _StatusPill(status: status),
+          ],
+        ],
+      ),
       subtitle: Text(s.frequencyLabel(t)),
       childrenPadding: const EdgeInsets.fromLTRB(24, 0, 16, 8),
       children: [
@@ -231,7 +263,7 @@ class _TreatmentTile extends StatelessWidget {
                   Icons.event_busy,
                   t.endDate == null
                       ? remaining
-                      : '${_fmtDate(t.endDate!)} · $remaining'),
+                      : '${s.endDateShort}: ${_fmtDate(t.endDate!)} · $remaining'),
               if (t.notes != null && t.notes!.isNotEmpty)
                 _detailRow(context, Icons.notes, t.notes!),
             ],
@@ -253,6 +285,39 @@ class _TreatmentTile extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Small coloured status label for inactive/completed treatments.
+class _StatusPill extends StatelessWidget {
+  final TreatmentStatus status;
+  const _StatusPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final theme = Theme.of(context);
+    final (bg, fg) = switch (status) {
+      TreatmentStatus.completed => (
+          theme.colorScheme.primaryContainer,
+          theme.colorScheme.onPrimaryContainer,
+        ),
+      _ => (
+          theme.colorScheme.surfaceContainerHighest,
+          theme.colorScheme.onSurfaceVariant,
+        ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        s.treatmentStatusName(status),
+        style: theme.textTheme.labelSmall?.copyWith(color: fg),
+      ),
     );
   }
 }

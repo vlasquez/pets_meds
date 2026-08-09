@@ -24,6 +24,9 @@ enum FrequencyType {
 
 enum IntervalUnit { hours, days, months }
 
+/// Lifecycle status of a treatment for display.
+enum TreatmentStatus { active, inactive, completed }
+
 /// Domain entity: a treatment — a [Medication] from the catalog assigned
 /// to one pet, with its dosing schedule. A medication can back many
 /// treatments (1-to-many).
@@ -119,6 +122,18 @@ class Treatment extends Equatable {
         active: active ?? this.active,
         notes: notes ?? this.notes,
       );
+
+  /// Lifecycle status: completed when the end date has passed, inactive
+  /// when manually deactivated, otherwise active.
+  TreatmentStatus statusOn(DateTime now) {
+    if (endDate != null) {
+      final today = DateTime(now.year, now.month, now.day);
+      final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+      if (end.isBefore(today)) return TreatmentStatus.completed;
+    }
+    if (!active) return TreatmentStatus.inactive;
+    return TreatmentStatus.active;
+  }
 
   /// Days remaining until [endDate] (0 = ends today, negative = already
   /// over), or null when the treatment has no end date.
