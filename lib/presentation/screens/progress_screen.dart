@@ -75,11 +75,6 @@ class _PetProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final theme = Theme.of(context);
-    final expectedTotal = entries.fold(0, (sum, e) => sum + e.expectedTotal);
-    final givenTotal = entries.fold(0, (sum, e) => sum + e.givenTotal);
-    final progress =
-        expectedTotal == 0 ? 0.0 : (givenTotal / expectedTotal).clamp(0.0, 1.0);
     final now = DateTime.now();
     var active = 0, inactive = 0, completed = 0;
     for (final e in entries) {
@@ -99,29 +94,7 @@ class _PetProgressCard extends StatelessWidget {
         leading: PetAvatar(pet: pet),
         initiallyExpanded: true,
         title: Text(pet.name),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(s.treatmentSummary(active, inactive, completed)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text('${(progress * 100).round()}%',
-                    style: theme.textTheme.labelMedium),
-              ],
-            ),
-          ],
-        ),
+        subtitle: Text(s.treatmentSummary(active, inactive, completed)),
         children: [
           for (final entry in entries) _TreatmentProgressTile(entry: entry),
           const SizedBox(height: 8),
