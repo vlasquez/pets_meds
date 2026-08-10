@@ -338,8 +338,11 @@ class S {
   /// Schedule summary plus times of day (when relevant). Times honor the
   /// user's 24h / AM-PM preference, so a [BuildContext] is required.
   String scheduleLabel(BuildContext context, Treatment t) {
-    final times =
-        t.times.map((x) => formatScheduleTime(context, x)).join(', ');
+    // Use the expanded intake hours so multi-dose schedules (e.g. every
+    // 8 h) list every application time, not just the first.
+    final times = t.intakeTimesPerDay
+        .map((x) => formatScheduleTime(context, x))
+        .join(', ');
     if (times.isEmpty) return frequencyLabel(t);
     return '${frequencyLabel(t)} · $times';
   }
