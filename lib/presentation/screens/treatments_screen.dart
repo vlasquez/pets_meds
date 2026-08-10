@@ -263,9 +263,9 @@ class _TreatmentTile extends StatelessWidget {
                   Icons.event_busy,
                   t.endDate == null
                       ? remaining
-                      : status == TreatmentStatus.completed
-                          // Completed already shown by the status pill;
-                          // drop the redundant "Ended" suffix.
+                      : status != TreatmentStatus.active
+                          // Completed/inactive is already shown by the status
+                          // pill; drop the redundant "Ended" suffix.
                           ? '${s.endDateShort}: ${_fmtDate(t.endDate!)}'
                           : '${s.endDateShort}: ${_fmtDate(t.endDate!)} · $remaining'),
               if (t.notes != null && t.notes!.isNotEmpty)

@@ -64,6 +64,10 @@ class Treatment extends Equatable {
   final bool active;
   final String? notes;
 
+  /// Denormalized count of dose logs recorded for this treatment (joined
+  /// by the repository for display / status). Not persisted on the row.
+  final int dosesGiven;
+
   const Treatment({
     this.id,
     required this.petId,
@@ -82,6 +86,7 @@ class Treatment extends Equatable {
     this.endDate,
     this.active = true,
     this.notes,
+    this.dosesGiven = 0,
   });
 
   Treatment copyWith({
@@ -102,6 +107,7 @@ class Treatment extends Equatable {
     DateTime? endDate,
     bool? active,
     String? notes,
+    int? dosesGiven,
   }) =>
       Treatment(
         id: id ?? this.id,
@@ -121,18 +127,47 @@ class Treatment extends Equatable {
         endDate: endDate ?? this.endDate,
         active: active ?? this.active,
         notes: notes ?? this.notes,
+        dosesGiven: dosesGiven ?? this.dosesGiven,
       );
 
-  /// Lifecycle status: completed when the end date has passed, inactive
-  /// when manually deactivated, otherwise active.
+  /// Lifecycle status:
+  /// - completed when every scheduled dose has been given (only possible
+  ///   for treatments with a finite schedule, i.e. an end date);
+  /// - inactive when manually deactivated or its end date has passed
+  ///   without all doses given;
+  /// - otherwise active.
   TreatmentStatus statusOn(DateTime now) {
+    final expected = expectedDoseCount;
+    if (expected != null && expected > 0 && dosesGiven >= expected) {
+      return TreatmentStatus.completed;
+    }
+    if (!active) return TreatmentStatus.inactive;
     if (endDate != null) {
       final today = DateTime(now.year, now.month, now.day);
       final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
-      if (end.isBefore(today)) return TreatmentStatus.completed;
+      if (end.isBefore(today)) return TreatmentStatus.inactive;
     }
-    if (!active) return TreatmentStatus.inactive;
     return TreatmentStatus.active;
+  }
+
+  /// Total doses expected across the whole treatment, from [startDate] to
+  /// [endDate] inclusive. Null for open-ended treatments (no end date) and
+  /// for on-demand schedules, which can never be "completed".
+  int? get expectedDoseCount {
+    if (endDate == null || frequencyType == FrequencyType.onDemand) {
+      return null;
+    }
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
+    if (end.isBefore(start)) return 0;
+    // Iterate by day index so we never drift across DST boundaries.
+    var total = 0;
+    for (var i = 0;; i++) {
+      final day = DateTime(start.year, start.month, start.day + i);
+      if (day.isAfter(end)) break;
+      if (_matchesSchedulePattern(day)) total += dosesPerDay;
+    }
+    return total;
   }
 
   /// Days remaining until [endDate] (0 = ends today, negative = already
@@ -211,6 +246,13 @@ class Treatment extends Equatable {
       final end = DateTime(endDate!.year, endDate!.month, endDate!.day);
       if (date.isAfter(end)) return false;
     }
+    return _matchesSchedulePattern(date);
+  }
+
+  /// Whether [day] matches the frequency pattern, ignoring the active flag
+  /// and the start/end range (callers gate those). [day] must be date-only.
+  bool _matchesSchedulePattern(DateTime date) {
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
     switch (frequencyType) {
       case FrequencyType.daily:
       case FrequencyType.onDemand:
@@ -256,5 +298,6 @@ class Treatment extends Equatable {
         endDate,
         active,
         notes,
+        dosesGiven,
       ];
 }

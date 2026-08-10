@@ -8,7 +8,9 @@ class TreatmentLocalDataSource {
   const TreatmentLocalDataSource(this._provider);
 
   static const _select = '''
-    SELECT t.*, m.name AS medicationName
+    SELECT t.*, m.name AS medicationName,
+      (SELECT COUNT(*) FROM dose_logs d WHERE d.treatmentId = t.id)
+        AS dosesGiven
     FROM treatments t
     JOIN medications m ON m.id = t.medicationId
   ''';
