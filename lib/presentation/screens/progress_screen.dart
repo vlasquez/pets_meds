@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/pet.dart';
+import '../../domain/entities/treatment.dart';
 import '../../utils/strings.dart';
 import '../../utils/time_format.dart';
 import '../blocs/progress/progress_bloc.dart';
@@ -79,6 +80,18 @@ class _PetProgressCard extends StatelessWidget {
     final givenTotal = entries.fold(0, (sum, e) => sum + e.givenTotal);
     final progress =
         expectedTotal == 0 ? 0.0 : (givenTotal / expectedTotal).clamp(0.0, 1.0);
+    final now = DateTime.now();
+    var active = 0, inactive = 0, completed = 0;
+    for (final e in entries) {
+      switch (e.treatment.statusOn(now)) {
+        case TreatmentStatus.active:
+          active++;
+        case TreatmentStatus.inactive:
+          inactive++;
+        case TreatmentStatus.completed:
+          completed++;
+      }
+    }
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       clipBehavior: Clip.antiAlias,
@@ -89,7 +102,7 @@ class _PetProgressCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(s.nActiveTreatments(entries.length)),
+            Text(s.treatmentSummary(active, inactive, completed)),
             const SizedBox(height: 6),
             Row(
               children: [

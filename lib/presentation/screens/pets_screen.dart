@@ -168,7 +168,13 @@ class _PetCard extends StatelessWidget {
                 _row(
                   context,
                   Icons.medication_outlined,
-                  s.nActiveTreatments(item.activeTreatments),
+                  item.totalTreatments == 0
+                      ? s.nTreatments(0)
+                      : s.treatmentSummary(
+                          item.activeTreatments,
+                          item.inactiveTreatments,
+                          item.completedTreatments,
+                        ),
                 ),
               ],
             ),

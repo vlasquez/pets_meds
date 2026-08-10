@@ -376,6 +376,14 @@ class S {
     ];
     return parts.join(' · ');
   }
+
+  /// "4 treatments · 2 active · 2 completed": the total plus non-zero
+  /// status categories, so the count isn't mistaken for all-active.
+  String treatmentSummary(int active, int inactive, int completed) {
+    final total = active + inactive + completed;
+    final breakdown = treatmentCountsBreakdown(active, inactive, completed);
+    return breakdown.isEmpty ? nTreatments(total) : '${nTreatments(total)} · $breakdown';
+  }
   String get endDate => _es ? 'Fecha de fin (opcional)' : 'End date (optional)';
   String get noEndDate => _es ? 'Sin fecha de fin' : 'No end date';
   String get active => _es ? 'Activo' : 'Active';
