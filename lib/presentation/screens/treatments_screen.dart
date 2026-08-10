@@ -168,6 +168,9 @@ class _TreatmentsView extends StatelessWidget {
                     child: ExpansionTile(
                       leading: PetAvatar(pet: pet),
                       initiallyExpanded: true,
+                      // Remove the top/bottom divider lines shown when expanded.
+                      shape: const Border(),
+                      collapsedShape: const Border(),
                       title: Text(pet.name),
                       subtitle: Text(_petSubtitle(s, entries)),
                       children: [
@@ -228,6 +231,9 @@ class _TreatmentTile extends StatelessWidget {
     final status = t.statusOn(DateTime.now());
     return ExpansionTile(
       dense: true,
+      // Remove the top/bottom divider lines shown when expanded.
+      shape: const Border(),
+      collapsedShape: const Border(),
       leading: CircleAvatar(
         radius: 16,
         backgroundColor: status == TreatmentStatus.active
