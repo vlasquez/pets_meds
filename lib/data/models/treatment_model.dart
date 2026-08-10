@@ -23,6 +23,7 @@ class TreatmentModel extends Treatment {
     super.endDate,
     super.active,
     super.notes,
+    super.dosesGiven,
   });
 
   factory TreatmentModel.fromEntity(Treatment t) => TreatmentModel(
@@ -111,6 +112,7 @@ class TreatmentModel extends Treatment {
             : DateTime.parse(map['endDate'] as String),
         active: (map['active'] as int? ?? 1) == 1,
         notes: map['notes'] as String?,
+        dosesGiven: (map['dosesGiven'] as int?) ?? 0,
       );
 
   /// Persisted columns only — `medicationName` is a joined display field.

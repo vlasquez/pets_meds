@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/pet.dart';
+import '../../domain/entities/treatment.dart';
 import '../../utils/strings.dart';
 import '../../utils/time_format.dart';
 import '../blocs/progress/progress_bloc.dart';
@@ -74,11 +75,18 @@ class _PetProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final theme = Theme.of(context);
-    final expectedTotal = entries.fold(0, (sum, e) => sum + e.expectedTotal);
-    final givenTotal = entries.fold(0, (sum, e) => sum + e.givenTotal);
-    final progress =
-        expectedTotal == 0 ? 0.0 : (givenTotal / expectedTotal).clamp(0.0, 1.0);
+    final now = DateTime.now();
+    var active = 0, inactive = 0, completed = 0;
+    for (final e in entries) {
+      switch (e.treatment.statusOn(now)) {
+        case TreatmentStatus.active:
+          active++;
+        case TreatmentStatus.inactive:
+          inactive++;
+        case TreatmentStatus.completed:
+          completed++;
+      }
+    }
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       clipBehavior: Clip.antiAlias,
@@ -86,29 +94,7 @@ class _PetProgressCard extends StatelessWidget {
         leading: PetAvatar(pet: pet),
         initiallyExpanded: true,
         title: Text(pet.name),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(s.nActiveTreatments(entries.length)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text('$givenTotal/$expectedTotal',
-                    style: theme.textTheme.labelMedium),
-              ],
-            ),
-          ],
-        ),
+        subtitle: Text(s.treatmentSummary(active, inactive, completed)),
         children: [
           for (final entry in entries) _TreatmentProgressTile(entry: entry),
           const SizedBox(height: 8),
@@ -156,7 +142,7 @@ class _TreatmentProgressTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text('${entry.givenTotal}/${entry.expectedTotal}',
+              Text('${(entry.progress * 100).round()}%',
                   style: theme.textTheme.labelMedium),
             ],
           ),
@@ -178,20 +164,20 @@ class _DayRow extends StatelessWidget {
   String _dateLabel(S s, DateTime d) =>
       '${s.weekdayShort(d.weekday)} ${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
 
-  void _check(BuildContext context) {
+  void _check(BuildContext context, int index) {
     final s = S.of(context);
     final t = entry.treatment;
     context.read<ProgressBloc>().add(ProgressDoseChecked(
           day: day,
+          intakeIndex: index,
           notificationTitle: s.reminderTitle(entry.pet.name),
           notificationBody: s.reminderBody(
               t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
         ));
   }
 
-  void _uncheck(BuildContext context) {
-    if (day.logIds.isEmpty) return;
-    context.read<ProgressBloc>().add(ProgressDoseUnchecked(day.logIds.last));
+  void _uncheck(BuildContext context, int logId) {
+    context.read<ProgressBloc>().add(ProgressDoseUnchecked(logId));
   }
 
   @override
@@ -231,10 +217,10 @@ class _DayRow extends StatelessWidget {
                         i < intakes.length
                             ? formatScheduleTime(context, intakes[i])
                             : '#${i + 1}',
-                    taken: i < day.given,
-                    onTap: i < day.given
-                        ? () => _uncheck(context)
-                        : () => _check(context),
+                    taken: day.isTaken(i),
+                    onTap: day.isTaken(i)
+                        ? () => _uncheck(context, day.logIdAt(i)!)
+                        : () => _check(context, i),
                   ),
               ],
             ),

@@ -8,17 +8,30 @@ final class PetOverview extends Equatable {
   final double? lastWeightKg;
   final DateTime? lastVaccinationDate;
   final int activeTreatments;
+  final int inactiveTreatments;
+  final int completedTreatments;
 
   const PetOverview({
     required this.pet,
     required this.lastWeightKg,
     required this.lastVaccinationDate,
     required this.activeTreatments,
+    required this.inactiveTreatments,
+    required this.completedTreatments,
   });
 
+  int get totalTreatments =>
+      activeTreatments + inactiveTreatments + completedTreatments;
+
   @override
-  List<Object?> get props =>
-      [pet, lastWeightKg, lastVaccinationDate, activeTreatments];
+  List<Object?> get props => [
+        pet,
+        lastWeightKg,
+        lastVaccinationDate,
+        activeTreatments,
+        inactiveTreatments,
+        completedTreatments,
+      ];
 }
 
 final class PetsOverviewState extends Equatable {

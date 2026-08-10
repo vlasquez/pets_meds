@@ -338,8 +338,11 @@ class S {
   /// Schedule summary plus times of day (when relevant). Times honor the
   /// user's 24h / AM-PM preference, so a [BuildContext] is required.
   String scheduleLabel(BuildContext context, Treatment t) {
-    final times =
-        t.times.map((x) => formatScheduleTime(context, x)).join(', ');
+    // Use the expanded intake hours so multi-dose schedules (e.g. every
+    // 8 h) list every application time, not just the first.
+    final times = t.intakeTimesPerDay
+        .map((x) => formatScheduleTime(context, x))
+        .join(', ');
     if (times.isEmpty) return frequencyLabel(t);
     return '${frequencyLabel(t)} · $times';
   }
@@ -350,6 +353,40 @@ class S {
   String get atLeastOneTime =>
       _es ? 'Agrega al menos un horario' : 'Add at least one time';
   String get startDate => _es ? 'Fecha de inicio' : 'Start date';
+  String get endDateShort => _es ? 'Fecha de fin' : 'End date';
+
+  String treatmentStatusName(TreatmentStatus status) {
+    switch (status) {
+      case TreatmentStatus.active:
+        return _es ? 'Activo' : 'Active';
+      case TreatmentStatus.inactive:
+        return _es ? 'Inactivo' : 'Inactive';
+      case TreatmentStatus.completed:
+        return _es ? 'Completado' : 'Completed';
+    }
+  }
+
+  /// Per-pet breakdown like "2 activos · 1 inactivo · 1 completado",
+  /// only including non-zero categories.
+  String treatmentCountsBreakdown(int active, int inactive, int completed) {
+    final parts = <String>[
+      if (active > 0)
+        '$active ${treatmentStatusName(TreatmentStatus.active).toLowerCase()}',
+      if (inactive > 0)
+        '$inactive ${treatmentStatusName(TreatmentStatus.inactive).toLowerCase()}',
+      if (completed > 0)
+        '$completed ${treatmentStatusName(TreatmentStatus.completed).toLowerCase()}',
+    ];
+    return parts.join(' · ');
+  }
+
+  /// "4 treatments · 2 active · 2 completed": the total plus non-zero
+  /// status categories, so the count isn't mistaken for all-active.
+  String treatmentSummary(int active, int inactive, int completed) {
+    final total = active + inactive + completed;
+    final breakdown = treatmentCountsBreakdown(active, inactive, completed);
+    return breakdown.isEmpty ? nTreatments(total) : '${nTreatments(total)} · $breakdown';
+  }
   String get endDate => _es ? 'Fecha de fin (opcional)' : 'End date (optional)';
   String get noEndDate => _es ? 'Sin fecha de fin' : 'No end date';
   String get active => _es ? 'Activo' : 'Active';

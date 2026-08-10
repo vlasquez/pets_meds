@@ -8,21 +8,29 @@ final class DayProgress extends Equatable {
   final DateTime date;
   final int expected;
 
-  /// Dose log ids of that day, oldest first.
-  final List<int> logIds;
+  /// One entry per expected intake (aligned with the treatment's intake
+  /// hours): the dose log id when that intake was taken, or null. Each
+  /// intake is independent — no need to check earlier ones first.
+  final List<int?> slotLogIds;
 
   const DayProgress({
     required this.treatment,
     required this.date,
     required this.expected,
-    required this.logIds,
+    required this.slotLogIds,
   });
 
-  int get given => logIds.length;
+  int get given => slotLogIds.where((id) => id != null).length;
   bool get completed => given >= expected;
 
+  bool isTaken(int index) =>
+      index >= 0 && index < slotLogIds.length && slotLogIds[index] != null;
+
+  int? logIdAt(int index) =>
+      (index >= 0 && index < slotLogIds.length) ? slotLogIds[index] : null;
+
   @override
-  List<Object?> get props => [treatment, date, expected, logIds];
+  List<Object?> get props => [treatment, date, expected, slotLogIds];
 }
 
 /// A treatment's day-by-day progress (most recent day first).

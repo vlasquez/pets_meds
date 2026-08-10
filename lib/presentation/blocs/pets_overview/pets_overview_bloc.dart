@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entities/pet.dart';
+import '../../../domain/entities/treatment.dart';
 import '../../../domain/usecases/get_pets.dart';
 import '../../../domain/usecases/get_treatments.dart';
 import '../../../domain/usecases/get_vaccinations.dart';
@@ -41,12 +42,26 @@ class PetsOverviewBloc extends Bloc<PetsOverviewEvent, PetsOverviewState> {
         final weights = await _getWeightHistory(pet.id!);
         final vaccinations = await _getVaccinations(pet.id!);
         final treatments = await _getTreatments(pet.id!);
+        final now = DateTime.now();
+        var active = 0, inactive = 0, completed = 0;
+        for (final t in treatments) {
+          switch (t.statusOn(now)) {
+            case TreatmentStatus.active:
+              active++;
+            case TreatmentStatus.inactive:
+              inactive++;
+            case TreatmentStatus.completed:
+              completed++;
+          }
+        }
         items.add(PetOverview(
           pet: pet,
           lastWeightKg: weights.isEmpty ? null : weights.first.weightKg,
           lastVaccinationDate:
               vaccinations.isEmpty ? null : vaccinations.first.appliedAt,
-          activeTreatments: treatments.where((t) => t.active).length,
+          activeTreatments: active,
+          inactiveTreatments: inactive,
+          completedTreatments: completed,
         ));
       }
       emit(state.copyWith(status: PetsOverviewStatus.success, items: items));
