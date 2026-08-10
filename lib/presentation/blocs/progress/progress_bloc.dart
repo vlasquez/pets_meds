@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/entities/dose_log.dart';
 import '../../../domain/entities/pet.dart';
 import '../../../domain/entities/schedule_time.dart';
 import '../../../domain/entities/treatment.dart';
@@ -50,11 +51,11 @@ class ProgressBloc extends Bloc<ProgressEvent, ProgressState> {
 
   Future<void> _onChecked(
       ProgressDoseChecked event, Emitter<ProgressState> emit) async {
-    // Log the dose at the day's next open intake hour (or noon).
+    // Log the dose at the selected intake's hour (or noon for on-demand).
     final t = event.day.treatment;
     final intakes = t.intakeTimesPerDay;
-    final index = event.day.logIds.length;
-    final time = index < intakes.length
+    final index = event.intakeIndex;
+    final time = index >= 0 && index < intakes.length
         ? intakes[index]
         : const ScheduleTime(12, 0);
     await _logDose(
@@ -75,6 +76,34 @@ class ProgressBloc extends Bloc<ProgressEvent, ProgressState> {
 
   static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
+  /// Maps a day's dose logs to one slot per expected intake, matching each
+  /// log to the slot with the same hour:minute so every intake is
+  /// independent. On-demand (no fixed hours) fills slots positionally.
+  static List<int?> _slotLogIds(Treatment t, List<DoseLog> dayLogs) {
+    final intakes = t.intakeTimesPerDay;
+    if (intakes.isEmpty) {
+      final slots = List<int?>.filled(t.dosesPerDay, null);
+      for (var i = 0; i < slots.length && i < dayLogs.length; i++) {
+        slots[i] = dayLogs[i].id;
+      }
+      return slots;
+    }
+    final remaining = List.of(dayLogs);
+    return [
+      for (final time in intakes) _takeMatching(remaining, time.hour, time.minute),
+    ];
+  }
+
+  /// Removes and returns the id of a log at [hour]:[minute], or null.
+  static int? _takeMatching(List<DoseLog> logs, int hour, int minute) {
+    final idx = logs.indexWhere(
+        (l) => l.givenAt.hour == hour && l.givenAt.minute == minute);
+    if (idx < 0) return null;
+    final id = logs[idx].id;
+    logs.removeAt(idx);
+    return id;
+  }
+
   Future<void> _emitProgress(Emitter<ProgressState> emit) async {
     try {
       final today = _dateOnly(DateTime.now());
@@ -84,19 +113,19 @@ class ProgressBloc extends Bloc<ProgressEvent, ProgressState> {
 
       // Logs per pet, grouped by treatment and day (oldest first).
       final entries = <TreatmentProgress>[];
-      final historyByPet = <int, Map<int, Map<DateTime, List<int>>>>{};
+      final historyByPet = <int, Map<int, Map<DateTime, List<DoseLog>>>>{};
       for (final t in treatments) {
         final pet = petsById[t.petId];
         if (pet == null) continue;
 
         final byTreatment = historyByPet[t.petId] ??= await () async {
           final history = await _getDoseHistory(t.petId);
-          final grouped = <int, Map<DateTime, List<int>>>{};
+          final grouped = <int, Map<DateTime, List<DoseLog>>>{};
           for (final log in history.logs.reversed) {
             grouped
                 .putIfAbsent(log.treatmentId, () => {})
                 .putIfAbsent(_dateOnly(log.givenAt), () => [])
-                .add(log.id!);
+                .add(log);
           }
           return grouped;
         }();
@@ -112,7 +141,7 @@ class ProgressBloc extends Bloc<ProgressEvent, ProgressState> {
               treatment: t,
               date: day,
               expected: t.dosesPerDay,
-              logIds: logsByDay[day] ?? const [],
+              slotLogIds: _slotLogIds(t, logsByDay[day] ?? const []),
             ));
           }
           day = day.subtract(const Duration(days: 1));

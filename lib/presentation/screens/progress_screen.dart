@@ -178,20 +178,20 @@ class _DayRow extends StatelessWidget {
   String _dateLabel(S s, DateTime d) =>
       '${s.weekdayShort(d.weekday)} ${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
 
-  void _check(BuildContext context) {
+  void _check(BuildContext context, int index) {
     final s = S.of(context);
     final t = entry.treatment;
     context.read<ProgressBloc>().add(ProgressDoseChecked(
           day: day,
+          intakeIndex: index,
           notificationTitle: s.reminderTitle(entry.pet.name),
           notificationBody: s.reminderBody(
               t.medicationName, s.formatDose(t.doseAmount, t.doseUnit)),
         ));
   }
 
-  void _uncheck(BuildContext context) {
-    if (day.logIds.isEmpty) return;
-    context.read<ProgressBloc>().add(ProgressDoseUnchecked(day.logIds.last));
+  void _uncheck(BuildContext context, int logId) {
+    context.read<ProgressBloc>().add(ProgressDoseUnchecked(logId));
   }
 
   @override
@@ -231,10 +231,10 @@ class _DayRow extends StatelessWidget {
                         i < intakes.length
                             ? formatScheduleTime(context, intakes[i])
                             : '#${i + 1}',
-                    taken: i < day.given,
-                    onTap: i < day.given
-                        ? () => _uncheck(context)
-                        : () => _check(context),
+                    taken: day.isTaken(i),
+                    onTap: day.isTaken(i)
+                        ? () => _uncheck(context, day.logIdAt(i)!)
+                        : () => _check(context, i),
                   ),
               ],
             ),
